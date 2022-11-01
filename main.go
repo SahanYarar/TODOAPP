@@ -8,7 +8,7 @@ func main() {
 	db := con_database()
 	User_Repo := New_Repo_User(db)
 
-	User_Hand := New_Hand(User_Repo
+	User_Hand := New_Hand(User_Repo)
 
 	route := gin.Default()
 	route.GET("/user/crate", User_Hand.New_User)
