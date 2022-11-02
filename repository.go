@@ -1,6 +1,8 @@
 package main
 
 import (
+	"fmt"
+
 	"github.com/jinzhu/gorm"
 	_ "github.com/jinzhu/gorm/dialects/postgres"
 )
@@ -19,12 +21,11 @@ func New_Repo_User(db *gorm.DB) *UserRepositoryPostgres {
 
 }
 
-func (con *UserRepositoryPostgres) Create_User(user *user) error {
+func (con *UserRepositoryPostgres) Create_User(user *user) {
 
-	err := con.db.Create(&user).Error
-	if err != nil {
-		return err
-	}
-	return nil
+	con.db.Create(&user)
+
+	fmt.Println("Succesfully created")
+	return
 
 }
