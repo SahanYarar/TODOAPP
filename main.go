@@ -8,12 +8,17 @@ func main() {
 	db := con_database()
 	User_Repo := New_Repo_User(db)
 
-	User_Hand := New_Hand(User_Repo
+	User_Hand := New_Hand(User_Repo)
 
-	route := gin.Default()
-	route.GET("/user/crate", User_Hand.New_User)
+	r := gin.Default()
+	r.POST("/user/crate", User_Hand.New_User)
+	r.GET("/test", func(c *gin.Context) {
+		c.JSON(200, gin.H{
+			"message": "ok!!!",
+		})
+	})
 
-	route.Run(":8085")
+	r.Run(":8085")
 }
 
 /*
