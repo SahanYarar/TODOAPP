@@ -1,17 +1,15 @@
 package common
 
 import (
-	"fmt"
-
-	"github.com/jinzhu/gorm"
-	_ "github.com/jinzhu/gorm/dialects/postgres"
+	"gorm.io/driver/postgres"
+	"gorm.io/gorm"
 )
 
-func Connect_Database() *gorm.DB {
-	db, err := gorm.Open("postgres", "host=localhost port=8085 user=your_user dbname=deneme_01 password=toor")
+func Connect_Database(DatabaseUrl string) *gorm.DB {
+	db, err := gorm.Open(postgres.Open(DatabaseUrl), &gorm.Config{})
 
 	if err != nil {
-		fmt.Println(err)
+		return nil
 	}
 	return db
 }

@@ -9,7 +9,9 @@ import (
 )
 
 func main() {
-	db := common.Connect_Database()
+
+	env := common.Get_Environment()
+	db := common.Connect_Database(env.DatabaseUrl)
 	User_Repository := repository.New_Repo_User(db)
 
 	User_Handler := handler.New_Handler(User_Repository)
@@ -22,5 +24,5 @@ func main() {
 		})
 	})
 
-	r.Run(":8085")
+	r.Run(":9920")
 }

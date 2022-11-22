@@ -3,8 +3,7 @@ package repository
 import (
 	"todoapi/entities"
 
-	"github.com/jinzhu/gorm"
-	_ "github.com/jinzhu/gorm/dialects/postgres"
+	"gorm.io/gorm"
 )
 
 type UserRepositoryPostgres struct {
