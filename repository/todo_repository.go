@@ -6,26 +6,61 @@ import (
 	"gorm.io/gorm"
 )
 
-type UserRepositoryPostgres struct {
+type ToDoRepositoryPostgres struct {
 	db *gorm.DB
 }
 
-type UserRepository_Interface interface {
-	Create_User_Db(user *entities.User) error
+type ToDoRepositoryInterface interface {
+	Create(u *entities.ToDo) error
+	GetAll(u []*entities.ToDo) ([]*entities.ToDo, error)
+	Get(id uint64) (*entities.ToDo, error)
+	Update(id uint64, u *entities.ToDo) (*entities.ToDo, error)
 }
 
-func New_Repo_User(db *gorm.DB) *UserRepositoryPostgres {
+func CreateRepositoryToDo(db *gorm.DB) *ToDoRepositoryPostgres {
 
-	return &UserRepositoryPostgres{db}
+	return &ToDoRepositoryPostgres{db}
 
 }
 
-func (connect *UserRepositoryPostgres) Create_User_Db(user *entities.User) error {
+func (connect *ToDoRepositoryPostgres) Create(u *entities.ToDo) error {
 
-	err := connect.db.Create(&user).Error
+	err := connect.db.Create(&u).Error
 
 	if err != nil {
 		return err
 	}
 	return nil
+}
+
+func (connect *ToDoRepositoryPostgres) GetAll(u []*entities.ToDo) ([]*entities.ToDo, error) {
+
+	err := connect.db.Find(&u).Error
+
+	if err != nil {
+		return nil, err
+	}
+	return u, err
+
+}
+func (connect *ToDoRepositoryPostgres) Get(id uint64) (*entities.ToDo, error) {
+	ToDo := &entities.ToDo{ID: id}
+	err := connect.db.First(&ToDo).Error
+
+	if err != nil {
+		return nil, err
+	}
+	return ToDo, err
+
+}
+
+func (connect *ToDoRepositoryPostgres) Update(id uint64, u *entities.ToDo) (*entities.ToDo, error) {
+	ToDo := &entities.ToDo{ID: id}
+	err := connect.db.Model(ToDo).Updates(&u).Error
+
+	if err != nil {
+		return nil, err
+	}
+	return ToDo, err
+
 }

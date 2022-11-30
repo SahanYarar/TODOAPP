@@ -11,17 +11,21 @@ import (
 func main() {
 
 	env := common.Get_Environment()
-	db := common.Connect_Database(env.DatabaseUrl)
-	User_Repository := repository.New_Repo_User(db)
+	db := common.ConnectDatabase(env.DatabaseUrl)
+	ToDoRepository := repository.CreateRepositoryToDo(db)
 
-	User_Handler := handler.New_Handler(User_Repository)
+	ToDoHandler := handler.CreateHandler(ToDoRepository)
 
 	r := gin.Default()
-	r.POST("/user/create", User_Handler.Create_User)
+	r.POST("/todo/create", ToDoHandler.CreateToDo)
+	r.GET("/todo/getall", ToDoHandler.GetAllToDos)
+	r.GET("/todo/:id", ToDoHandler.GetToDo)
+	r.PUT("/todo/update/:id", ToDoHandler.UpdateToDo)
 	r.GET("/test", func(c *gin.Context) {
 		c.JSON(200, gin.H{
 			"message": "ok!!!",
 		})
+
 	})
 
 	r.Run(":9920")

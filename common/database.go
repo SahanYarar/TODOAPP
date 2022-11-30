@@ -5,7 +5,7 @@ import (
 	"gorm.io/gorm"
 )
 
-func Connect_Database(DatabaseUrl string) *gorm.DB {
+func ConnectDatabase(DatabaseUrl string) *gorm.DB {
 	db, err := gorm.Open(postgres.Open(DatabaseUrl), &gorm.Config{})
 
 	if err != nil {

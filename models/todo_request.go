@@ -1,6 +1,6 @@
 package models
 
-type UserRequest struct {
-	Name   string `json:"name"`
-	Status string `json:"status"`
+type ToDoRequest struct {
+	Details string `json:"details"`
+	Status  string `json:"status"`
 }

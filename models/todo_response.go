@@ -1,7 +1,9 @@
 package models
 
-type UserResponse struct {
-	Id     int    `json:"id"`
-	Name   string `json:"name"`
-	Status string `json:"status"`
+type ToDoResponse struct {
+	ID        int    `json:"Id"`
+	Details   string `json:"details"`
+	Status    string `json:"status"`
+	CreatedAt string `json:"CreatedAt"`
+	UpdatedAt string `json:"UpdatedAt"`
 }

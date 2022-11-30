@@ -18,7 +18,7 @@ func Get_Environment() *Environment {
 		return nil
 	}
 
-	database_url := os.Getenv("Dns")
+	database_url := os.Getenv("DNS")
 
 	return &Environment{
 		DatabaseUrl: database_url,
