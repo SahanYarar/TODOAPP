@@ -15,6 +15,7 @@ type ToDoRepositoryInterface interface {
 	GetAll(u []*entities.ToDo) ([]*entities.ToDo, error)
 	Get(id uint64) (*entities.ToDo, error)
 	Update(id uint64, u *entities.ToDo) (*entities.ToDo, error)
+	Delete(id uint64) error
 }
 
 func CreateRepositoryToDo(db *gorm.DB) *ToDoRepositoryPostgres {
@@ -63,4 +64,14 @@ func (connect *ToDoRepositoryPostgres) Update(id uint64, u *entities.ToDo) (*ent
 	}
 	return ToDo, err
 
+}
+
+func (connect *ToDoRepositoryPostgres) Delete(id uint64) error {
+
+	ToDo := &entities.ToDo{ID: id}
+	err := connect.db.Delete(ToDo).Error
+	if err != nil {
+		return err
+	}
+	return nil
 }

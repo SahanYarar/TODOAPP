@@ -21,6 +21,7 @@ func main() {
 	r.GET("/todo/getall", ToDoHandler.GetAllToDos)
 	r.GET("/todo/:id", ToDoHandler.GetToDo)
 	r.PUT("/todo/update/:id", ToDoHandler.UpdateToDo)
+	r.DELETE("/todo/delete/:id", ToDoHandler.DeleteToDo)
 	r.GET("/test", func(c *gin.Context) {
 		c.JSON(200, gin.H{
 			"message": "ok!!!",

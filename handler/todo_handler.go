@@ -30,11 +30,11 @@ func (handler *ToDoHandler) CreateToDo(c *gin.Context) {
 		return
 	}
 
-	fmt.Println(payload.Details)
+	fmt.Println(payload.Description)
 
 	createToDo := &entities.ToDo{
-		Details: payload.Details,
-		Status:  payload.Status,
+		Description: payload.Description,
+		Status:      payload.Status,
 	}
 
 	err := handler.ToDoRepository.Create(createToDo)
@@ -82,8 +82,8 @@ func (handler *ToDoHandler) UpdateToDo(c *gin.Context) {
 		return
 	}
 	UpdatedToDo := &entities.ToDo{
-		Details: payload.Details,
-		Status:  payload.Status,
+		Description: payload.Description,
+		Status:      payload.Status,
 	}
 
 	ToDoID, err := strconv.ParseUint(c.Param("id"), 10, 64)
@@ -94,5 +94,18 @@ func (handler *ToDoHandler) UpdateToDo(c *gin.Context) {
 		return
 	}
 	c.JSON(http.StatusCreated, ToDo)
+
+}
+
+func (handler *ToDoHandler) DeleteToDo(c *gin.Context) {
+	ToDoID, err := strconv.ParseUint(c.Param("id"), 10, 64)
+
+	ToDo := handler.ToDoRepository.Delete(ToDoID)
+	if err != nil {
+		zap.S().Error("Error: ", zap.Error(err))
+		return
+	}
+
+	c.JSON(http.StatusNoContent, ToDo)
 
 }
