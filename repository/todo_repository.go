@@ -41,6 +41,7 @@ func (connect *ToDoRepositoryPostgres) GetAll(u []*entities.ToDo) ([]*entities.T
 	if err != nil {
 		return nil, err
 	}
+
 	return u, err
 
 }

@@ -1,6 +1,6 @@
 package models
 
 type ToDoRequest struct {
-	Description string `json:"description"`
-	Status      string `json:"status"`
+	Description string `json:"description" binding:"required"`
+	Status      string `json:"status" binding:"required"`
 }

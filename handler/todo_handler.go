@@ -1,7 +1,6 @@
 package handler
 
 import (
-	"fmt"
 	"net/http"
 	"strconv"
 
@@ -30,8 +29,6 @@ func (handler *ToDoHandler) CreateToDo(c *gin.Context) {
 		return
 	}
 
-	fmt.Println(payload.Description)
-
 	createToDo := &entities.ToDo{
 		Description: payload.Description,
 		Status:      payload.Status,
@@ -50,14 +47,19 @@ func (handler *ToDoHandler) CreateToDo(c *gin.Context) {
 func (handler *ToDoHandler) GetAllToDos(c *gin.Context) {
 
 	var u []*entities.ToDo
-	/*if err := c.ShouldBindJSON(&u); err != nil {
-		c.JSON(http.StatusNoContent, gin.H{"error": err.Error()})
-		return
-	}*/
-
 	ToDos, err := handler.ToDoRepository.GetAll(u)
+
 	if err != nil {
 		zap.S().Error("Error: ", zap.Error(err))
+		c.JSON(http.StatusInternalServerError, nil)
+		return
+	}
+
+	if ToDos == nil {
+		zap.S().Error("Error: ", zap.Error(err))
+		c.JSON(http.StatusNotFound, gin.H{
+			"massage": "ToDos not exists",
+		})
 		return
 	}
 	c.JSON(http.StatusOK, ToDos)
@@ -66,9 +68,18 @@ func (handler *ToDoHandler) GetAllToDos(c *gin.Context) {
 func (handler *ToDoHandler) GetToDo(c *gin.Context) {
 	ToDoID, err := strconv.ParseUint(c.Param("id"), 10, 64)
 
-	ToDo, err := handler.ToDoRepository.Get(ToDoID)
 	if err != nil {
 		zap.S().Error("Error: ", zap.Error(err))
+		c.JSON(http.StatusInternalServerError, nil)
+		return
+	}
+
+	ToDo, err := handler.ToDoRepository.Get(ToDoID)
+	if ToDo == nil {
+		zap.S().Error("Error: ", zap.Error(err))
+		c.JSON(http.StatusNotFound, gin.H{
+			"message": "ToDo not exists!",
+		})
 		return
 	}
 
@@ -76,17 +87,34 @@ func (handler *ToDoHandler) GetToDo(c *gin.Context) {
 }
 
 func (handler *ToDoHandler) UpdateToDo(c *gin.Context) {
-	var payload = &models.ToDoRequest{}
+	var payload = &models.ToDoPatchRequest{}
+
+	ToDoID, err := strconv.ParseUint(c.Param("id"), 10, 64)
+	ValidateToDoId, err := handler.ToDoRepository.Get(ToDoID)
+
 	if err := c.ShouldBindJSON(&payload); err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return
 	}
+
+	if err != nil {
+		zap.S().Error("Error: ", zap.Error(err))
+		c.JSON(http.StatusInternalServerError, err)
+		return
+	}
+
+	if ValidateToDoId == nil {
+		zap.S().Error("Error: ", zap.Error(err))
+		c.JSON(http.StatusNotFound, gin.H{
+			"message": "ToDo not exists!",
+		})
+		return
+	}
+
 	UpdatedToDo := &entities.ToDo{
 		Description: payload.Description,
 		Status:      payload.Status,
 	}
-
-	ToDoID, err := strconv.ParseUint(c.Param("id"), 10, 64)
 
 	ToDo, err := handler.ToDoRepository.Update(ToDoID, UpdatedToDo)
 	if err != nil {
@@ -99,13 +127,24 @@ func (handler *ToDoHandler) UpdateToDo(c *gin.Context) {
 
 func (handler *ToDoHandler) DeleteToDo(c *gin.Context) {
 	ToDoID, err := strconv.ParseUint(c.Param("id"), 10, 64)
-
-	ToDo := handler.ToDoRepository.Delete(ToDoID)
-	if err != nil {
+	ValidateToDoId, err := handler.ToDoRepository.Get(ToDoID)
+	if ValidateToDoId == nil {
 		zap.S().Error("Error: ", zap.Error(err))
+		c.JSON(http.StatusNotFound, gin.H{
+			"message": "ToDo not exists!",
+		})
 		return
 	}
 
-	c.JSON(http.StatusNoContent, ToDo)
+	err = handler.ToDoRepository.Delete(ToDoID)
+	if err != nil {
+		zap.S().Error("Error: ", zap.Error(err))
+		c.JSON(http.StatusInternalServerError, err)
+		return
+	}
+
+	c.JSON(http.StatusNoContent, gin.H{
+		"message": "ToDo deleted!",
+	})
 
 }

@@ -9,6 +9,7 @@ import (
 
 type Environment struct {
 	DatabaseUrl string
+	Port        string
 }
 
 func Get_Environment() *Environment {
@@ -19,8 +20,10 @@ func Get_Environment() *Environment {
 	}
 
 	database_url := os.Getenv("DNS")
+	port := os.Getenv("Port")
 
 	return &Environment{
 		DatabaseUrl: database_url,
+		Port:        port,
 	}
 }

@@ -20,7 +20,7 @@ func main() {
 	r.POST("/todo/create", ToDoHandler.CreateToDo)
 	r.GET("/todo/getall", ToDoHandler.GetAllToDos)
 	r.GET("/todo/:id", ToDoHandler.GetToDo)
-	r.PUT("/todo/update/:id", ToDoHandler.UpdateToDo)
+	r.PATCH("/todo/update/:id", ToDoHandler.UpdateToDo)
 	r.DELETE("/todo/delete/:id", ToDoHandler.DeleteToDo)
 	r.GET("/test", func(c *gin.Context) {
 		c.JSON(200, gin.H{
@@ -29,5 +29,5 @@ func main() {
 
 	})
 
-	r.Run(":9920")
+	r.Run(env.Port)
 }
