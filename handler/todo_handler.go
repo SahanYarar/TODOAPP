@@ -91,6 +91,13 @@ func (handler *ToDoHandler) UpdateToDo(c *gin.Context) {
 
 	ToDoID, err := strconv.ParseUint(c.Param("id"), 10, 64)
 	ValidateToDoId, err := handler.ToDoRepository.Get(ToDoID)
+	if ValidateToDoId == nil {
+		zap.S().Error("Error: ", zap.Error(err))
+		c.JSON(http.StatusNotFound, gin.H{
+			"message": "ToDo not exists!",
+		})
+		return
+	}
 
 	if err := c.ShouldBindJSON(&payload); err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
@@ -100,14 +107,6 @@ func (handler *ToDoHandler) UpdateToDo(c *gin.Context) {
 	if err != nil {
 		zap.S().Error("Error: ", zap.Error(err))
 		c.JSON(http.StatusInternalServerError, err)
-		return
-	}
-
-	if ValidateToDoId == nil {
-		zap.S().Error("Error: ", zap.Error(err))
-		c.JSON(http.StatusNotFound, gin.H{
-			"message": "ToDo not exists!",
-		})
 		return
 	}
 
