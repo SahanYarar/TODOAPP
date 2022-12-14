@@ -56,7 +56,7 @@ func (handler *ToDoHandler) GetAllToDos(c *gin.Context) {
 	}
 
 	if ToDos == nil {
-		zap.S().Error("Error: ", zap.Error(err))
+
 		c.JSON(http.StatusNotFound, gin.H{
 			"massage": "ToDos not exists",
 		})
@@ -76,7 +76,7 @@ func (handler *ToDoHandler) GetToDo(c *gin.Context) {
 
 	ToDo, err := handler.ToDoRepository.Get(ToDoID)
 	if ToDo == nil {
-		zap.S().Error("Error: ", zap.Error(err))
+
 		c.JSON(http.StatusNotFound, gin.H{
 			"message": "ToDo not exists!",
 		})
@@ -99,8 +99,16 @@ func (handler *ToDoHandler) UpdateToDo(c *gin.Context) {
 		return
 	}
 
+	/*if err := payload.ValidateRequest(); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": err})
+		return
+	}*/
+
 	if err := c.ShouldBindJSON(&payload); err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		zap.S().Error("Error: ", zap.Error(err))
+		c.JSON(http.StatusBadRequest, gin.H{
+			"message": "Bad request!",
+		})
 		return
 	}
 
@@ -110,23 +118,34 @@ func (handler *ToDoHandler) UpdateToDo(c *gin.Context) {
 		return
 	}
 
-	UpdatedToDo := &entities.ToDo{
+	PayloadToDo := &entities.ToDo{
 		Description: payload.Description,
 		Status:      payload.Status,
 	}
+	if PayloadToDo == nil {
 
-	ToDo, err := handler.ToDoRepository.Update(ToDoID, UpdatedToDo)
+		c.JSON(http.StatusBadRequest, nil)
+		return
+	}
+	err = handler.ToDoRepository.Update(ToDoID, PayloadToDo)
 	if err != nil {
 		zap.S().Error("Error: ", zap.Error(err))
 		return
 	}
-	c.JSON(http.StatusCreated, ToDo)
 
+	UpdatedToDo, err := handler.ToDoRepository.Get(ToDoID)
+	if err != nil {
+		zap.S().Error("Error: ", zap.Error(err))
+		c.JSON(http.StatusInternalServerError, nil)
+		return
+	}
+	c.JSON(http.StatusCreated, UpdatedToDo)
+	//Updated todo dön
 }
 
 func (handler *ToDoHandler) DeleteToDo(c *gin.Context) {
 	ToDoID, err := strconv.ParseUint(c.Param("id"), 10, 64)
-	ValidateToDoId, err := handler.ToDoRepository.Get(ToDoID)
+	ValidateToDoId, err := handler.ToDoRepository.Get(ToDoID) //isimde sıkıntı
 	if ValidateToDoId == nil {
 		zap.S().Error("Error: ", zap.Error(err))
 		c.JSON(http.StatusNotFound, gin.H{

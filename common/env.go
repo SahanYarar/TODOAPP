@@ -26,4 +26,4 @@ func Get_Environment() *Environment {
 		DatabaseUrl: database_url,
 		Port:        port,
 	}
-}
+} //Snakecase

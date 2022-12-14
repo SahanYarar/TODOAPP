@@ -10,9 +10,9 @@ import (
 
 func main() {
 
-	env := common.Get_Environment()
-	db := common.ConnectDatabase(env.DatabaseUrl)
-	ToDoRepository := repository.CreateRepositoryToDo(db)
+	Env := common.Get_Environment()
+	Db := common.ConnectDatabase(Env.DatabaseUrl)
+	ToDoRepository := repository.CreateRepositoryToDo(Db)
 
 	ToDoHandler := handler.CreateHandler(ToDoRepository)
 
@@ -29,5 +29,5 @@ func main() {
 
 	})
 
-	r.Run(env.Port)
+	r.Run(Env.Port)
 }
