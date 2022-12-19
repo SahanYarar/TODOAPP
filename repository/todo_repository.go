@@ -52,7 +52,7 @@ func (todoRepository *ToDoRepositoryPostgres) Get(id uint64) (*entities.ToDo, er
 }
 
 func (todoRepository *ToDoRepositoryPostgres) Update(u *entities.ToDo) error {
-	return todoRepository.db.Model(&u).Where("id = ?", &u.ID).Save(&u).Error
+	return todoRepository.db.Model(&u).Where("id = ?", &u.ID).Updates(&u).Error
 }
 
 func (todoRepository *ToDoRepositoryPostgres) Delete(id uint64) error {

@@ -119,20 +119,20 @@ func (handler *ToDoHandler) UpdateToDo(c *gin.Context) {
 		Status:      payload.Status,
 	}
 
-	if payloadToDo.Status == " " || payloadToDo.Status == "" {
+	if payloadToDo.Status == " " {
 
 		c.JSON(http.StatusBadRequest, gin.H{
-			"message":                        "Bad request!",
-			"Status field cannot be empty!!": payloadToDo.Status,
+			"message": "Bad request!",
+			"Status field cannot be empty if it's given in json!!": payloadToDo.Status,
 		})
 		return
 	}
 
-	if payloadToDo.Description == " " || payloadToDo.Description == "" {
+	if payloadToDo.Description == " " {
 
 		c.JSON(http.StatusBadRequest, gin.H{
-			"message":                             "Bad request!",
-			"Description field cannot be empty!!": payloadToDo.Description,
+			"message": "Bad request!",
+			"Description field cannot be empty if given in json!!": payloadToDo.Description,
 		})
 		return
 	}
