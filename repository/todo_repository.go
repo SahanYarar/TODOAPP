@@ -14,7 +14,7 @@ type ToDoRepositoryInterface interface {
 	Create(u *entities.ToDo) error
 	GetAll(u []*entities.ToDo) ([]*entities.ToDo, error)
 	Get(id uint64) (*entities.ToDo, error)
-	Update(id uint64, u *entities.ToDo) (*entities.ToDo, error)
+	Update(id uint64, u *entities.ToDo) error
 	Delete(id uint64) error
 }
 
@@ -24,19 +24,14 @@ func CreateRepositoryToDo(db *gorm.DB) *ToDoRepositoryPostgres {
 
 }
 
-func (connect *ToDoRepositoryPostgres) Create(u *entities.ToDo) error {
+func (ToDoRepository *ToDoRepositoryPostgres) Create(u *entities.ToDo) error {
 
-	err := connect.db.Create(&u).Error
-
-	if err != nil {
-		return err
-	}
-	return nil
+	return ToDoRepository.db.Create(&u).Error
 }
 
-func (connect *ToDoRepositoryPostgres) GetAll(u []*entities.ToDo) ([]*entities.ToDo, error) {
+func (ToDoRepository *ToDoRepositoryPostgres) GetAll(u []*entities.ToDo) ([]*entities.ToDo, error) {
 
-	err := connect.db.Find(&u).Error
+	err := ToDoRepository.db.Find(&u).Error
 
 	if err != nil {
 		return nil, err
@@ -45,9 +40,9 @@ func (connect *ToDoRepositoryPostgres) GetAll(u []*entities.ToDo) ([]*entities.T
 	return u, err
 
 }
-func (connect *ToDoRepositoryPostgres) Get(id uint64) (*entities.ToDo, error) {
+func (ToDoRepository *ToDoRepositoryPostgres) Get(id uint64) (*entities.ToDo, error) {
 	ToDo := &entities.ToDo{ID: id}
-	err := connect.db.First(&ToDo).Error
+	err := ToDoRepository.db.First(&ToDo).Error
 
 	if err != nil {
 		return nil, err
@@ -56,23 +51,16 @@ func (connect *ToDoRepositoryPostgres) Get(id uint64) (*entities.ToDo, error) {
 
 }
 
-func (connect *ToDoRepositoryPostgres) Update(id uint64, u *entities.ToDo) (*entities.ToDo, error) {
+func (ToDoRepository *ToDoRepositoryPostgres) Update(id uint64, u *entities.ToDo) error {
 	ToDo := &entities.ToDo{ID: id}
-	err := connect.db.Model(ToDo).Updates(&u).Error
 
-	if err != nil {
-		return nil, err
-	}
-	return ToDo, err
+	return ToDoRepository.db.Model(ToDo).Updates(&u).Error
 
 }
 
-func (connect *ToDoRepositoryPostgres) Delete(id uint64) error {
+func (ToDoRepository *ToDoRepositoryPostgres) Delete(id uint64) error {
 
 	ToDo := &entities.ToDo{ID: id}
-	err := connect.db.Delete(ToDo).Error
-	if err != nil {
-		return err
-	}
-	return nil
+
+	return ToDoRepository.db.Delete(ToDo).Error
 }
