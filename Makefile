@@ -5,6 +5,8 @@ run:
 build:
 	go build
 
+.PHONY: install_tools
+install_tools: tools/swagger tools/golang-migrate
 
 tools/golang-migrate:
 	$(call print-target)
