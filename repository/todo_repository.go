@@ -14,7 +14,7 @@ type ToDoRepositoryInterface interface {
 	Create(u *entities.ToDo) error
 	GetAll(u []*entities.ToDo) ([]*entities.ToDo, error)
 	Get(id uint64) (*entities.ToDo, error)
-	Update(id uint64, u *entities.ToDo) error
+	Update(u *entities.ToDo) error
 	Delete(id uint64) error
 }
 
@@ -24,14 +24,14 @@ func CreateRepositoryToDo(db *gorm.DB) *ToDoRepositoryPostgres {
 
 }
 
-func (ToDoRepository *ToDoRepositoryPostgres) Create(u *entities.ToDo) error {
+func (todoRepository *ToDoRepositoryPostgres) Create(u *entities.ToDo) error {
 
-	return ToDoRepository.db.Create(&u).Error
+	return todoRepository.db.Create(&u).Error
 }
 
-func (ToDoRepository *ToDoRepositoryPostgres) GetAll(u []*entities.ToDo) ([]*entities.ToDo, error) {
+func (todoRepository *ToDoRepositoryPostgres) GetAll(u []*entities.ToDo) ([]*entities.ToDo, error) {
 
-	err := ToDoRepository.db.Find(&u).Error
+	err := todoRepository.db.Find(&u).Error
 
 	if err != nil {
 		return nil, err
@@ -40,27 +40,24 @@ func (ToDoRepository *ToDoRepositoryPostgres) GetAll(u []*entities.ToDo) ([]*ent
 	return u, err
 
 }
-func (ToDoRepository *ToDoRepositoryPostgres) Get(id uint64) (*entities.ToDo, error) {
-	ToDo := &entities.ToDo{ID: id}
-	err := ToDoRepository.db.First(&ToDo).Error
+func (todoRepository *ToDoRepositoryPostgres) Get(id uint64) (*entities.ToDo, error) {
+	todo := &entities.ToDo{ID: id}
+	err := todoRepository.db.First(&todo).Error
 
 	if err != nil {
 		return nil, err
 	}
-	return ToDo, err
+	return todo, err
 
 }
 
-func (ToDoRepository *ToDoRepositoryPostgres) Update(id uint64, u *entities.ToDo) error {
-	ToDo := &entities.ToDo{ID: id}
-
-	return ToDoRepository.db.Model(ToDo).Updates(&u).Error
-
+func (todoRepository *ToDoRepositoryPostgres) Update(u *entities.ToDo) error {
+	return todoRepository.db.Model(&u).Where("id = ?", &u.ID).Save(&u).Error
 }
 
-func (ToDoRepository *ToDoRepositoryPostgres) Delete(id uint64) error {
+func (todoRepository *ToDoRepositoryPostgres) Delete(id uint64) error {
 
-	ToDo := &entities.ToDo{ID: id}
+	todoID := &entities.ToDo{ID: id}
 
-	return ToDoRepository.db.Delete(ToDo).Error
+	return todoRepository.db.Delete(todoID).Error
 }

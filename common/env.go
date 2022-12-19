@@ -12,18 +12,18 @@ type Environment struct {
 	Port        string
 }
 
-func Get_Environment() *Environment {
+func GetEnvironment() *Environment {
 	err := godotenv.Load(".env")
 	if err != nil {
 		zap.S().Error("Error: ", zap.Error(err))
 		return nil
 	}
 
-	database_url := os.Getenv("DNS")
+	databaseUrl := os.Getenv("DNS")
 	port := os.Getenv("Port")
 
 	return &Environment{
-		DatabaseUrl: database_url,
+		DatabaseUrl: databaseUrl,
 		Port:        port,
 	}
-} //Snakecase
+}
