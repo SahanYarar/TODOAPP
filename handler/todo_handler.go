@@ -47,7 +47,7 @@ func (handler *ToDoHandler) CreateToDo(c *gin.Context) {
 func (handler *ToDoHandler) GetAllToDos(c *gin.Context) {
 
 	var u []*entities.ToDo
-	ToDos, err := handler.ToDoRepository.GetAll(u)
+	todos, err := handler.ToDoRepository.GetAll(u)
 
 	if err != nil {
 		zap.S().Error("Error: ", zap.Error(err))
@@ -55,18 +55,18 @@ func (handler *ToDoHandler) GetAllToDos(c *gin.Context) {
 		return
 	}
 
-	if ToDos == nil {
+	if todos == nil {
 
 		c.JSON(http.StatusNotFound, gin.H{
 			"massage": "ToDos not exists",
 		})
 		return
 	}
-	c.JSON(http.StatusOK, ToDos)
+	c.JSON(http.StatusOK, todos)
 }
 
 func (handler *ToDoHandler) GetToDo(c *gin.Context) {
-	ToDoID, err := strconv.ParseUint(c.Param("id"), 10, 64)
+	todoID, err := strconv.ParseUint(c.Param("id"), 10, 64)
 
 	if err != nil {
 		zap.S().Error("Error: ", zap.Error(err))
@@ -74,8 +74,8 @@ func (handler *ToDoHandler) GetToDo(c *gin.Context) {
 		return
 	}
 
-	ToDo, err := handler.ToDoRepository.Get(ToDoID)
-	if ToDo == nil {
+	todo, err := handler.ToDoRepository.Get(todoID)
+	if todo == nil {
 
 		c.JSON(http.StatusNotFound, gin.H{
 			"message": "ToDo not exists!",
@@ -83,26 +83,21 @@ func (handler *ToDoHandler) GetToDo(c *gin.Context) {
 		return
 	}
 
-	c.JSON(http.StatusOK, ToDo)
+	c.JSON(http.StatusOK, todo)
 }
 
 func (handler *ToDoHandler) UpdateToDo(c *gin.Context) {
 	var payload = &models.ToDoPatchRequest{}
 
-	ToDoID, err := strconv.ParseUint(c.Param("id"), 10, 64)
-	ValidateToDoId, err := handler.ToDoRepository.Get(ToDoID)
-	if ValidateToDoId == nil {
+	todoID, err := strconv.ParseUint(c.Param("id"), 10, 64)
+	checkToDo, err := handler.ToDoRepository.Get(todoID)
+	if checkToDo == nil {
 		zap.S().Error("Error: ", zap.Error(err))
 		c.JSON(http.StatusNotFound, gin.H{
 			"message": "ToDo not exists!",
 		})
 		return
 	}
-
-	/*if err := payload.ValidateRequest(); err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": err})
-		return
-	}*/
 
 	if err := c.ShouldBindJSON(&payload); err != nil {
 		zap.S().Error("Error: ", zap.Error(err))
@@ -118,35 +113,49 @@ func (handler *ToDoHandler) UpdateToDo(c *gin.Context) {
 		return
 	}
 
-	PayloadToDo := &entities.ToDo{
+	payloadToDo := &entities.ToDo{
+		ID:          todoID,
 		Description: payload.Description,
 		Status:      payload.Status,
 	}
-	if PayloadToDo == nil {
 
-		c.JSON(http.StatusBadRequest, nil)
+	if payloadToDo.Status == " " {
+
+		c.JSON(http.StatusBadRequest, gin.H{
+			"message": "Bad request!",
+			"Status field cannot be empty if it's given in json!!": payloadToDo.Status,
+		})
 		return
 	}
-	err = handler.ToDoRepository.Update(ToDoID, PayloadToDo)
+
+	if payloadToDo.Description == " " {
+
+		c.JSON(http.StatusBadRequest, gin.H{
+			"message": "Bad request!",
+			"Description field cannot be empty if given in json!!": payloadToDo.Description,
+		})
+		return
+	}
+
+	err = handler.ToDoRepository.Update(payloadToDo)
 	if err != nil {
 		zap.S().Error("Error: ", zap.Error(err))
 		return
 	}
 
-	UpdatedToDo, err := handler.ToDoRepository.Get(ToDoID)
+	updatedToDo, err := handler.ToDoRepository.Get(todoID)
 	if err != nil {
 		zap.S().Error("Error: ", zap.Error(err))
 		c.JSON(http.StatusInternalServerError, nil)
 		return
 	}
-	c.JSON(http.StatusCreated, UpdatedToDo)
-	//Updated todo dön
+	c.JSON(http.StatusCreated, updatedToDo)
 }
 
 func (handler *ToDoHandler) DeleteToDo(c *gin.Context) {
-	ToDoID, err := strconv.ParseUint(c.Param("id"), 10, 64)
-	ValidateToDoId, err := handler.ToDoRepository.Get(ToDoID) //isimde sıkıntı
-	if ValidateToDoId == nil {
+	todoID, err := strconv.ParseUint(c.Param("id"), 10, 64)
+	checkToDo, err := handler.ToDoRepository.Get(todoID) //isimde sıkıntı
+	if checkToDo == nil {
 		zap.S().Error("Error: ", zap.Error(err))
 		c.JSON(http.StatusNotFound, gin.H{
 			"message": "ToDo not exists!",
@@ -154,7 +163,7 @@ func (handler *ToDoHandler) DeleteToDo(c *gin.Context) {
 		return
 	}
 
-	err = handler.ToDoRepository.Delete(ToDoID)
+	err = handler.ToDoRepository.Delete(todoID)
 	if err != nil {
 		zap.S().Error("Error: ", zap.Error(err))
 		c.JSON(http.StatusInternalServerError, err)
