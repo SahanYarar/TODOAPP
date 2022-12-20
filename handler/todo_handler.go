@@ -3,7 +3,7 @@ package handler
 import (
 	"net/http"
 	"strconv"
-
+	"todoapi/adapters"
 	"todoapi/entities"
 	"todoapi/models"
 
@@ -113,11 +113,7 @@ func (handler *ToDoHandler) UpdateToDo(c *gin.Context) {
 		return
 	}
 
-	payloadToDo := &entities.ToDo{
-		ID:          todoID,
-		Description: payload.Description,
-		Status:      payload.Status,
-	}
+	payloadToDo := adapters.CreateFromRequest(payload, todoID)
 
 	if payloadToDo.Status == " " {
 
