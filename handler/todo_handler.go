@@ -17,8 +17,8 @@ type ToDoHandler struct {
 	ToDoRepository repository.ToDoRepositoryInterface
 }
 
-func CreateHandler(ToDoRepo repository.ToDoRepositoryInterface) *ToDoHandler {
-	return &ToDoHandler{ToDoRepository: ToDoRepo}
+func CreateToDoHandler(todoRepository repository.ToDoRepositoryInterface) *ToDoHandler {
+	return &ToDoHandler{ToDoRepository: todoRepository}
 
 }
 
@@ -29,11 +29,7 @@ func (handler *ToDoHandler) CreateToDo(c *gin.Context) {
 		return
 	}
 
-	createToDo := &entities.ToDo{
-		Description: payload.Description,
-		Status:      payload.Status,
-	}
-
+	createToDo := adapters.CreateFromToDoRequest(payload)
 	err := handler.ToDoRepository.Create(createToDo)
 
 	if err != nil {
@@ -88,21 +84,19 @@ func (handler *ToDoHandler) GetToDo(c *gin.Context) {
 
 func (handler *ToDoHandler) UpdateToDo(c *gin.Context) {
 	var payload = &models.ToDoPatchRequest{}
-
-	todoID, err := strconv.ParseUint(c.Param("id"), 10, 64)
-	checkToDo, err := handler.ToDoRepository.Get(todoID)
-	if checkToDo == nil {
-		zap.S().Error("Error: ", zap.Error(err))
-		c.JSON(http.StatusNotFound, gin.H{
-			"message": "ToDo not exists!",
-		})
-		return
-	}
-
 	if err := c.ShouldBindJSON(&payload); err != nil {
 		zap.S().Error("Error: ", zap.Error(err))
 		c.JSON(http.StatusBadRequest, gin.H{
 			"message": "Bad request!",
+		})
+		return
+	}
+	todoID, err := strconv.ParseUint(c.Param("id"), 10, 64)
+	checkToDo, err := handler.ToDoRepository.Get(todoID)
+	if checkToDo == nil { //check todo güncelle
+		zap.S().Error("Error: ", zap.Error(err))
+		c.JSON(http.StatusNotFound, gin.H{
+			"message": "ToDo not exists!",
 		})
 		return
 	}
@@ -113,9 +107,9 @@ func (handler *ToDoHandler) UpdateToDo(c *gin.Context) {
 		return
 	}
 
-	payloadToDo := adapters.CreateFromRequest(payload, todoID)
+	payloadToDo := adapters.CreateFromToDoPatchRequest(payload, todoID)
 
-	if payloadToDo.Status == " " {
+	if payloadToDo.Status == " " { //Trim space
 
 		c.JSON(http.StatusBadRequest, gin.H{
 			"message": "Bad request!",

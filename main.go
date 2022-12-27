@@ -14,7 +14,7 @@ func main() {
 	db := common.ConnectDatabase(env.DatabaseUrl)
 	ToDoRepository := repository.CreateRepositoryToDo(db)
 
-	ToDoHandler := handler.CreateHandler(ToDoRepository)
+	ToDoHandler := handler.CreateToDoHandler(ToDoRepository)
 
 	r := gin.Default()
 	r.POST("/todo/create", ToDoHandler.CreateToDo)
