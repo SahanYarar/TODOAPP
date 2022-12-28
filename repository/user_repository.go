@@ -27,8 +27,7 @@ func (userRepository *UserRepositoryDatabase) CreateUser(u *entities.User) error
 }
 
 func (userRepository *UserRepositoryDatabase) GetAllUsers(u []*entities.User) ([]*entities.User, error) {
-
-	err := userRepository.db.Find(&u).Error
+	err := userRepository.db.Model(&u).Preload("Todos").Find(&u).Error
 
 	if err != nil {
 		return nil, err

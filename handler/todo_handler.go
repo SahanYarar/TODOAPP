@@ -83,14 +83,7 @@ func (handler *ToDoHandler) GetToDo(c *gin.Context) {
 }
 
 func (handler *ToDoHandler) UpdateToDo(c *gin.Context) {
-	var payload = &models.ToDoPatchRequest{}
-	if err := c.ShouldBindJSON(&payload); err != nil {
-		zap.S().Error("Error: ", zap.Error(err))
-		c.JSON(http.StatusBadRequest, gin.H{
-			"message": "Bad request!",
-		})
-		return
-	}
+
 	todoID, err := strconv.ParseUint(c.Param("id"), 10, 64)
 	checkToDo, err := handler.ToDoRepository.Get(todoID)
 	if checkToDo == nil { //check todo güncelle
@@ -107,44 +100,47 @@ func (handler *ToDoHandler) UpdateToDo(c *gin.Context) {
 		return
 	}
 
-	payloadToDo := adapters.CreateFromToDoPatchRequest(payload, todoID)
-
-	if payloadToDo.Status == " " { //Trim space
-
+	var payload *models.ToDoPatchRequest
+	if err := c.ShouldBindJSON(&payload); err != nil {
+		zap.S().Error("Error: ", zap.Error(err))
 		c.JSON(http.StatusBadRequest, gin.H{
 			"message": "Bad request!",
-			"Status field cannot be empty if it's given in json!!": payloadToDo.Status,
 		})
 		return
 	}
+	updatedToDo := adapters.CreateFromToDoPatchRequest(checkToDo, payload)
 
-	if payloadToDo.Description == " " {
+	err = handler.ToDoRepository.Update(updatedToDo)
+	/*
+		if err != nil {
+			zap.S().Error("Error: ", zap.Error(err))
+			return
+		}
 
-		c.JSON(http.StatusBadRequest, gin.H{
-			"message": "Bad request!",
-			"Description field cannot be empty if given in json!!": payloadToDo.Description,
-		})
-		return
-	}
+		if payloadToDo.Status == " " { //Trim space
 
-	err = handler.ToDoRepository.Update(payloadToDo)
-	if err != nil {
-		zap.S().Error("Error: ", zap.Error(err))
-		return
-	}
+			c.JSON(http.StatusBadRequest, gin.H{
+				"message": "Bad request!",
+				"Status field cannot be empty if it's given in json!!": payloadToDo.Status,
+			})
+			return
+		}
 
-	updatedToDo, err := handler.ToDoRepository.Get(todoID)
-	if err != nil {
-		zap.S().Error("Error: ", zap.Error(err))
-		c.JSON(http.StatusInternalServerError, nil)
-		return
-	}
-	c.JSON(http.StatusCreated, updatedToDo)
+		if payloadToDo.Description == " " {
+
+			c.JSON(http.StatusBadRequest, gin.H{
+				"message": "Bad request!",
+				"Description field cannot be empty if given in json!!": payloadToDo.Description,
+			})
+			return
+		}*/
+
+	c.JSON(http.StatusCreated, checkToDo)
 }
 
 func (handler *ToDoHandler) DeleteToDo(c *gin.Context) {
 	todoID, err := strconv.ParseUint(c.Param("id"), 10, 64)
-	checkToDo, err := handler.ToDoRepository.Get(todoID) //isimde sıkıntı
+	checkToDo, err := handler.ToDoRepository.Get(todoID)
 	if checkToDo == nil {
 		zap.S().Error("Error: ", zap.Error(err))
 		c.JSON(http.StatusNotFound, gin.H{
