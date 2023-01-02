@@ -7,6 +7,7 @@ import (
 
 func CreateFromToDoRequest(r *models.ToDoRequest) *entities.ToDo {
 	payload := &entities.ToDo{
+		UserID:      r.UserID,
 		Description: r.Description,
 		Status:      r.Status,
 	}
@@ -25,7 +26,6 @@ func CreateFromToDoPatchRequest(c *entities.ToDo, r *models.ToDoPatchRequest) *e
 }
 
 /*
-
 type ToDoAdapterInterface interface {
 	CreateFromToDoRequest(r *models.ToDoRequest) *entities.ToDo
 	CreateFromToDoPatchRequest(r *models.ToDoPatchRequest *AdapterToDo
@@ -44,8 +44,6 @@ func CreateFromToDoRequest(r *models.ToDoRequest) *entities.ToDo {
 	return payload
 
 }
-
-
 func (c *AdapterToDo)CreateFromToDoPatchRequest(r *models.ToDoPatchRequest) *AdapterToDo{
 	if &r.Status != nil {
 		c.Status = r.Status
@@ -55,26 +53,6 @@ func (c *AdapterToDo)CreateFromToDoPatchRequest(r *models.ToDoPatchRequest) *Ada
 	}
 	return c
 }
-
-
-**************************************************
-func CreateFromToDoPatchRequest(r *entities.ToDo, p *models.ToDoPatchRequest) *entities.ToDo {
-	payload := &entities.ToDo{
-		ID:          todoID,
-		Description: r.Description,
-		Status:      r.Status,
-	}
-	return payload}
-
-
-
-func CreateFromToDoPatchRequest(r *models.ToDoPatchRequest, todoID uint64) *entities.ToDo {
-	payload := &entities.ToDo{
-		ID:          todoID,
-		Description: r.Description,
-		Status:      r.Status,
-	}
-	return payload}
 
 2 versions 1-Todo objesini pass by ref. alarak güncellemek
 2-Adaptörü receiver func haline getirip güncelleme yapmak
