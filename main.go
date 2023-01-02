@@ -12,16 +12,20 @@ func main() {
 
 	env := common.GetEnvironment()
 	db := common.ConnectDatabase(env.DatabaseUrl)
-	ToDoRepository := repository.CreateRepositoryToDo(db)
-
-	ToDoHandler := handler.CreateHandler(ToDoRepository)
+	userRepository := repository.CreateRepositoryUser(db)
+	userHandler := handler.CreateUserHandler(userRepository)
+	todoRepository := repository.CreateRepositoryToDo(db)
+	todoHandler := handler.CreateToDoHandler(todoRepository)
 
 	r := gin.Default()
-	r.POST("/todo/create", ToDoHandler.CreateToDo)
-	r.GET("/todos/", ToDoHandler.GetAllToDos)
-	r.GET("/todo/:id", ToDoHandler.GetToDo)
-	r.PATCH("/todo/:id", ToDoHandler.UpdateToDo)
-	r.DELETE("/todo/:id", ToDoHandler.DeleteToDo)
+	r.POST("/user/create", userHandler.CreateUser)
+	r.GET("/users", userHandler.GetAllUsers)
+
+	r.POST("/todo/create", todoHandler.CreateToDo)
+	r.GET("/todos/", todoHandler.GetAllToDos)
+	r.GET("/todo/:id", todoHandler.GetToDo)
+	r.PATCH("/todo/:id", todoHandler.UpdateToDo)
+	r.DELETE("/todo/:id", todoHandler.DeleteToDo)
 	r.GET("/test", func(c *gin.Context) {
 		c.JSON(200, gin.H{
 			"message": "ok!!!",
