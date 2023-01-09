@@ -54,7 +54,7 @@ func (handler *ToDoHandler) GetAllToDos(c *gin.Context) {
 	if todos == nil {
 
 		c.JSON(http.StatusNotFound, gin.H{
-			"massage": "ToDos not exists",
+			"message": "ToDos not exists",
 		})
 		return
 	}

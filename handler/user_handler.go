@@ -60,7 +60,7 @@ func (handler *UserHandler) GetAllUsers(c *gin.Context) {
 	if user == nil {
 
 		c.JSON(http.StatusNotFound, gin.H{
-			"massage": "Users not exists",
+			"message": "Users not exists",
 		})
 		return
 	}
@@ -86,7 +86,7 @@ func (handler *UserHandler) Login(c *gin.Context) {
 	}
 	if user.Email != payload.Email {
 		c.JSON(http.StatusBadRequest, gin.H{
-			"massage": "Invalid email",
+			"message": "Invalid email",
 		})
 		return
 	}
@@ -94,7 +94,7 @@ func (handler *UserHandler) Login(c *gin.Context) {
 	err = bcrypt.CompareHashAndPassword([]byte(user.Password), []byte(payload.Password))
 	if err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{
-			"massage": "Invalid  password",
+			"message": "Invalid  password",
 		})
 		return
 	}
@@ -132,7 +132,7 @@ func (handler *UserHandler) Logout(c *gin.Context) {
 	}
 	if user.Email != payload.Email {
 		c.JSON(http.StatusBadRequest, gin.H{
-			"massage": "Invalid email",
+			"message": "Invalid email",
 		})
 		return
 	}
@@ -140,7 +140,7 @@ func (handler *UserHandler) Logout(c *gin.Context) {
 	err = bcrypt.CompareHashAndPassword([]byte(user.Password), []byte(payload.Password))
 	if err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{
-			"massage": "Invalid  password",
+			"message": "Invalid  password",
 		})
 		return
 	}
@@ -159,13 +159,13 @@ func (handler *UserHandler) Logout(c *gin.Context) {
 	}
 	if result == 0 {
 		c.JSON(http.StatusNotFound, gin.H{
-			"massage": "Token cannot found",
+			"message": "Token cannot found",
 		})
 		return
 	}
 
 	c.JSON(http.StatusOK, gin.H{
-		"massage": "Succesfully Logout",
+		"message": "Succesfully Logout",
 	})
 	return
 }
@@ -173,7 +173,31 @@ func (handler *UserHandler) Logout(c *gin.Context) {
 func (handler *UserHandler) ValidateToken(c *gin.Context) {
 
 	c.JSON(http.StatusOK, gin.H{
-		"Massage": "Token is valid",
+		"message": "Token is valid",
 	})
 
 }
+
+// Get
+
+func (handler *UserHandler) GetUser(c *gin.Context) {
+	userID, err := strconv.ParseUint(c.Param("id"), 10, 64)
+
+	if err != nil {
+		zap.S().Error("Error: ", zap.Error(err))
+		c.JSON(http.StatusInternalServerError, nil)
+		return
+	}
+	user, err := handler.UserRepository.GetUserByID(userID)
+	if user == nil {
+
+		c.JSON(http.StatusNotFound, gin.H{
+			"message": "User not exists!",
+		})
+		return
+	}
+}
+
+//Delete
+
+//Update Password
