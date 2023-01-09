@@ -48,9 +48,9 @@ func main() {
 	//Get Todo by id
 	r.GET("/todo/:id", todoHandler.GetToDo)
 	//Patch Todo
-	r.PATCH("/todo/update/:id", todoHandler.UpdateToDo)
+	r.PATCH("user/:userid/todo/update/:todoid", middlewareHandler.RequireAuth, todoHandler.UpdateToDo)
 	//Delete Todo
-	r.DELETE("/todo/delete/:id", todoHandler.DeleteToDo)
+	r.DELETE("user/:userid/todo/delete/:todoid", middlewareHandler.RequireAuth, todoHandler.DeleteToDo)
 	//Test main.go
 	r.GET("/test", func(c *gin.Context) {
 		c.JSON(200, gin.H{

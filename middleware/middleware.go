@@ -34,6 +34,7 @@ func (handler *MiddlewareHandler) RequireAuth(c *gin.Context) {
 	if len(splitToken) != 2 {
 		fmt.Println("request header hatasi")
 		fmt.Println(len(splitToken))
+		c.AbortWithStatus(http.StatusUnauthorized)
 		return
 
 	}
@@ -47,10 +48,11 @@ func (handler *MiddlewareHandler) RequireAuth(c *gin.Context) {
 	})
 
 	if claims, ok := token.Claims.(jwt.MapClaims); ok && token.Valid {
-		converted_id := claims["id"].(float64)
-		stringUserId := strconv.FormatFloat(converted_id, 'f', 0, 64)
-		user_ID := handler.RedisRepository.Exists(c, stringUserId)
-		if user_ID == 0 {
+		convertedId := claims["id"].(float64)
+		stringUserId := strconv.FormatFloat(convertedId, 'f', 0, 64)
+		isExists := handler.RedisRepository.Exists(c, stringUserId)
+
+		if isExists == 0 {
 			c.AbortWithStatus(http.StatusUnauthorized)
 		}
 
