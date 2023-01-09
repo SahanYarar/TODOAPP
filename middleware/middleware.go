@@ -3,15 +3,27 @@ package middleware
 import (
 	"fmt"
 	"net/http"
+	"strconv"
 	"strings"
 	"time"
 	"todoapi/common"
+	"todoapi/repository"
 
 	"github.com/gin-gonic/gin"
 	"github.com/golang-jwt/jwt/v4"
 )
 
-func RequireAuth(c *gin.Context) {
+type MiddlewareHandler struct {
+	RedisRepository repository.RedisRepositoryInterface
+}
+
+func CreateMiddlewareHandler(redisRepository repository.RedisRepositoryInterface) *MiddlewareHandler {
+	return &MiddlewareHandler{
+		RedisRepository: redisRepository,
+	}
+}
+
+func (handler *MiddlewareHandler) RequireAuth(c *gin.Context) {
 
 	env := common.GetEnvironment()
 
@@ -22,6 +34,7 @@ func RequireAuth(c *gin.Context) {
 	if len(splitToken) != 2 {
 		fmt.Println("request header hatasi")
 		fmt.Println(len(splitToken))
+		c.AbortWithStatus(http.StatusUnauthorized)
 		return
 
 	}
@@ -35,8 +48,18 @@ func RequireAuth(c *gin.Context) {
 	})
 
 	if claims, ok := token.Claims.(jwt.MapClaims); ok && token.Valid {
-		if claims["exp"].(float64) < float64(time.Now().Unix()) {
-			fmt.Println("Token time hatasi")
+		convertedId := claims["id"].(float64)
+		stringUserId := strconv.FormatFloat(convertedId, 'f', 0, 64)
+		isExists := handler.RedisRepository.Exists(c, stringUserId)
+
+		if isExists == 0 {
+			c.AbortWithStatus(http.StatusUnauthorized)
+		}
+
+		converted_time := claims["exp"].(float64)
+		if converted_time < float64(time.Now().Unix()) {
+
+			c.AbortWithStatus(http.StatusUnauthorized)
 			return
 		}
 		c.Next()

@@ -54,7 +54,7 @@ func (handler *ToDoHandler) GetAllToDos(c *gin.Context) {
 	if todos == nil {
 
 		c.JSON(http.StatusNotFound, gin.H{
-			"massage": "ToDos not exists",
+			"message": "ToDos not exists",
 		})
 		return
 	}
@@ -82,9 +82,13 @@ func (handler *ToDoHandler) GetToDo(c *gin.Context) {
 	c.JSON(http.StatusOK, todo)
 }
 
+// 403 issue
+//
+//	ilk çözüm /user/:userid/todo/:todoid burdaki :todoid iyle işlem yap userid yi validate et
+//	ikinci çözüm  middleware parçalara ayır tokendeki useridyi çek tododa verilenle karşılaştır
 func (handler *ToDoHandler) UpdateToDo(c *gin.Context) {
-
-	todoID, err := strconv.ParseUint(c.Param("id"), 10, 64)
+	userID, err := strconv.ParseUint(c.Param("userid"), 10, 64)
+	todoID, err := strconv.ParseUint(c.Param("todoid"), 10, 64)
 	checkToDo, err := handler.ToDoRepository.Get(todoID)
 	if checkToDo == nil { //check todo güncelle
 		zap.S().Error("Error: ", zap.Error(err))
@@ -97,6 +101,13 @@ func (handler *ToDoHandler) UpdateToDo(c *gin.Context) {
 	if err != nil {
 		zap.S().Error("Error: ", zap.Error(err))
 		c.JSON(http.StatusInternalServerError, err)
+		return
+	}
+	if checkToDo.UserID != userID {
+		zap.S().Error("Error: ", zap.Error(err))
+		c.JSON(http.StatusForbidden, gin.H{
+			"message": "Forbidden!!",
+		})
 		return
 	}
 
@@ -139,12 +150,21 @@ func (handler *ToDoHandler) UpdateToDo(c *gin.Context) {
 }
 
 func (handler *ToDoHandler) DeleteToDo(c *gin.Context) {
-	todoID, err := strconv.ParseUint(c.Param("id"), 10, 64)
+	userID, err := strconv.ParseUint(c.Param("userid"), 10, 64)
+	todoID, err := strconv.ParseUint(c.Param("todoid"), 10, 64)
 	checkToDo, err := handler.ToDoRepository.Get(todoID)
 	if checkToDo == nil {
 		zap.S().Error("Error: ", zap.Error(err))
 		c.JSON(http.StatusNotFound, gin.H{
 			"message": "ToDo not exists!",
+		})
+		return
+	}
+
+	if checkToDo.UserID != userID {
+		zap.S().Error("Error: ", zap.Error(err))
+		c.JSON(http.StatusForbidden, gin.H{
+			"message": "Forbidden!!",
 		})
 		return
 	}
