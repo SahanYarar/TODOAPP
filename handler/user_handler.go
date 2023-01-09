@@ -34,7 +34,7 @@ func (handler *UserHandler) SignUser(c *gin.Context) {
 		return
 	}
 
-	newUser := adapters.CreateFromUserRequest(payload)
+	newUser := adapters.CreateFromUserSignRequest(payload)
 	err := handler.UserRepository.CreateUser(newUser)
 	userResponse := adapters.CreateFromUserEntities(newUser)
 
@@ -146,21 +146,11 @@ func (handler *UserHandler) Logout(c *gin.Context) {
 	}
 
 	stringUserId := strconv.FormatInt(int64(user.ID), 10)
-
-	result := handler.RedisRepository.Exists(c, stringUserId)
-	if result == 1 {
-		err = handler.RedisRepository.Delete(c, stringUserId)
-		if err != nil {
-			fmt.Println("Patlayan delete")
-			zap.S().Error("Error: ", err)
-			c.JSON(http.StatusBadRequest, nil)
-			return
-		}
-	}
-	if result == 0 {
-		c.JSON(http.StatusNotFound, gin.H{
-			"message": "Token cannot found",
-		})
+	err = handler.RedisRepository.Delete(c, stringUserId)
+	if err != nil {
+		fmt.Println("Patlayan delete")
+		zap.S().Error("Error: ", err)
+		c.JSON(http.StatusBadRequest, nil)
 		return
 	}
 
@@ -178,8 +168,6 @@ func (handler *UserHandler) ValidateToken(c *gin.Context) {
 
 }
 
-// Get
-
 func (handler *UserHandler) GetUser(c *gin.Context) {
 	userID, err := strconv.ParseUint(c.Param("id"), 10, 64)
 
@@ -196,8 +184,59 @@ func (handler *UserHandler) GetUser(c *gin.Context) {
 		})
 		return
 	}
+	userResponse := adapters.CreateFromUserEntities(user)
+	c.JSON(http.StatusOK, userResponse)
 }
 
-//Delete
+func (handler *UserHandler) DeleteUser(c *gin.Context) {
+	userID, err := strconv.ParseUint(c.Param("id"), 10, 64)
+	checkUser, err := handler.UserRepository.GetUserByID(userID)
+	if checkUser == nil {
+		zap.S().Error("Error: ", zap.Error(err))
+		c.JSON(http.StatusNotFound, gin.H{
+			"message": "User not exists!",
+		})
+		return
+	}
 
-//Update Password
+	err = handler.UserRepository.DeleteUser(userID)
+	if err != nil {
+		zap.S().Error("Error: ", zap.Error(err))
+		c.JSON(http.StatusInternalServerError, err)
+		return
+	}
+
+	c.JSON(http.StatusNoContent, gin.H{
+		"message": "User deleted!",
+	})
+
+}
+
+// User yoksa token zaten olamaz user kontrolüne gerek yok
+func (handler *UserHandler) UpdateUserPassword(c *gin.Context) {
+	userID, err := strconv.ParseUint(c.Param("id"), 10, 64)
+	checkToDo, err := handler.UserRepository.GetUserByID(userID)
+	if err != nil {
+		zap.S().Error("Error: ", zap.Error(err))
+		c.JSON(http.StatusInternalServerError, err)
+		return
+	}
+	var payload *models.UserPasswordRequest
+	if err := c.ShouldBindJSON(&payload); err != nil {
+		zap.S().Error("Error: ", zap.Error(err))
+		c.JSON(http.StatusBadRequest, gin.H{
+			"message": "Bad request!",
+		})
+		return
+	}
+	if payload.Validate() == false {
+		c.JSON(http.StatusBadRequest, gin.H{
+			"message": "Password did not match!",
+		})
+		return
+	}
+
+	updatedUser := adapters.CreateFromUserPasswordRequest(checkToDo, payload)
+	err = handler.UserRepository.UpdateUserPassword(updatedUser)
+	c.JSON(http.StatusCreated, checkToDo)
+}

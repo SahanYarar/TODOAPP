@@ -18,6 +18,7 @@ func main() {
 	userRepository := repository.CreateRepositoryUser(db)
 	todoRepository := repository.CreateRepositoryToDo(db)
 
+	middlewareHandler := middleware.CreateMiddlewareHandler(redisRepository)
 	userHandler := handler.CreateUserHandler(userRepository, redisRepository)
 	todoHandler := handler.CreateToDoHandler(todoRepository)
 
@@ -29,9 +30,16 @@ func main() {
 	//Login user
 	r.POST("/login", userHandler.Login)
 	//Logout user
-	r.POST("/logout", middleware.RequireAuth, userHandler.Logout)
+	r.POST("/logout", middlewareHandler.RequireAuth, userHandler.Logout)
 	//Testing middleware
-	r.GET("/validate", middleware.RequireAuth, userHandler.ValidateToken)
+	r.GET("/validate", middlewareHandler.RequireAuth, userHandler.ValidateToken)
+
+	//Get user
+	r.GET("/user/:id", userHandler.GetUser)
+	//Delete user
+	r.DELETE("/user/delete/:id", userHandler.DeleteUser)
+	//Change password
+	r.PATCH("/user/update/:id", middlewareHandler.RequireAuth, userHandler.UpdateUserPassword)
 
 	//Create Todo
 	r.POST("/todo/create", todoHandler.CreateToDo)
