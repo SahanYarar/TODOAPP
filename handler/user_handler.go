@@ -1,38 +1,49 @@
 package handler
 
 import (
+	"fmt"
 	"net/http"
+	"strconv"
+	"time"
 	"todoapi/adapters"
 	"todoapi/entities"
 	"todoapi/models"
 	"todoapi/repository"
+	"todoapi/utils"
 
 	"github.com/gin-gonic/gin"
 	"go.uber.org/zap"
+	"golang.org/x/crypto/bcrypt"
 )
 
 type UserHandler struct {
-	UserRepository repository.UserRepositoryInterface
+	UserRepository  repository.UserRepositoryInterface
+	RedisRepository repository.RedisRepositoryInterface
 }
 
-func CreateUserHandler(userRepository repository.UserRepositoryInterface) *UserHandler {
-	return &UserHandler{UserRepository: userRepository}
+func CreateUserHandler(userRepository repository.UserRepositoryInterface, redisRepository repository.RedisRepositoryInterface) *UserHandler {
+	return &UserHandler{UserRepository: userRepository,
+		RedisRepository: redisRepository,
+	}
 }
 
-func (handler *UserHandler) CreateUser(c *gin.Context) {
-	var payload = &models.UserRequest{}
+func (handler *UserHandler) SignUser(c *gin.Context) {
+	var payload = &models.UserSignRequest{}
 	if err := c.ShouldBindJSON(&payload); err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return
 	}
-	createUser := adapters.CreateFromUserRequest(payload)
-	err := handler.UserRepository.CreateUser(createUser)
+
+	newUser := adapters.CreateFromUserRequest(payload)
+	err := handler.UserRepository.CreateUser(newUser)
+	userResponse := adapters.CreateFromUserEntities(newUser)
+
 	if err != nil {
-		zap.S().Error("Error: ", zap.Error(err))
+		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return
 	}
 
-	c.JSON(http.StatusCreated, createUser)
+	c.JSON(http.StatusCreated, userResponse)
 }
 
 func (handler *UserHandler) GetAllUsers(c *gin.Context) {
@@ -56,15 +67,113 @@ func (handler *UserHandler) GetAllUsers(c *gin.Context) {
 	c.JSON(http.StatusOK, user)
 }
 
-/*func Register(c *gin.Context){
+func (handler *UserHandler) Login(c *gin.Context) {
+	var payload *models.UserLoginRequest
+	if err := c.ShouldBindJSON(&payload); err != nil {
+		zap.S().Error("Error: ", zap.Error(err))
+		c.JSON(http.StatusBadRequest, gin.H{
+			"message": "Bad request!",
+		})
+		return
+	}
+	user, err := handler.UserRepository.GetUserByEmail(payload.Email)
+	if user == nil {
 
-	var input RegisterInput
-
-	if err := c.ShouldBindJSON(&input); err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		c.JSON(http.StatusNotFound, gin.H{
+			"message": "User not exists!",
+		})
+		return
+	}
+	if user.Email != payload.Email {
+		c.JSON(http.StatusBadRequest, gin.H{
+			"massage": "Invalid email",
+		})
 		return
 	}
 
-	c.JSON(http.StatusOK, gin.H{"message": "validated!"})
+	err = bcrypt.CompareHashAndPassword([]byte(user.Password), []byte(payload.Password))
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{
+			"massage": "Invalid  password",
+		})
+		return
+	}
+	user_jwt, err := utils.GenerateJWTToken(*user)
+	stringUserId := strconv.FormatInt(int64(user.ID), 10)
+	err = handler.RedisRepository.Set(c, stringUserId, user_jwt, time.Hour)
 
-}*/
+	if err != nil {
+		zap.S().Error("Error: ", err)
+		c.JSON(http.StatusBadRequest, nil)
+		return
+	}
+	c.JSON(http.StatusOK, gin.H{
+		"token": user_jwt,
+	})
+
+}
+
+func (handler *UserHandler) Logout(c *gin.Context) {
+	var payload *models.UserLoginRequest
+	if err := c.ShouldBindJSON(&payload); err != nil {
+		zap.S().Error("Error: ", zap.Error(err))
+		c.JSON(http.StatusBadRequest, gin.H{
+			"message": "Bad request!",
+		})
+		return
+	}
+	user, err := handler.UserRepository.GetUserByEmail(payload.Email)
+	if user == nil {
+
+		c.JSON(http.StatusNotFound, gin.H{
+			"message": "User not exists!",
+		})
+		return
+	}
+	if user.Email != payload.Email {
+		c.JSON(http.StatusBadRequest, gin.H{
+			"massage": "Invalid email",
+		})
+		return
+	}
+
+	err = bcrypt.CompareHashAndPassword([]byte(user.Password), []byte(payload.Password))
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{
+			"massage": "Invalid  password",
+		})
+		return
+	}
+
+	stringUserId := strconv.FormatInt(int64(user.ID), 10)
+
+	result := handler.RedisRepository.Exists(c, stringUserId)
+	if result == 1 {
+		err = handler.RedisRepository.Delete(c, stringUserId)
+		if err != nil {
+			fmt.Println("Patlayan delete")
+			zap.S().Error("Error: ", err)
+			c.JSON(http.StatusBadRequest, nil)
+			return
+		}
+	}
+	if result == 0 {
+		c.JSON(http.StatusNotFound, gin.H{
+			"massage": "Token cannot found",
+		})
+		return
+	}
+
+	c.JSON(http.StatusOK, gin.H{
+		"massage": "Succesfully Logout",
+	})
+	return
+}
+
+func (handler *UserHandler) ValidateToken(c *gin.Context) {
+
+	c.JSON(http.StatusOK, gin.H{
+		"Massage": "Token is valid",
+	})
+
+}
