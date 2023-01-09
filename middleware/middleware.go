@@ -3,41 +3,29 @@ package middleware
 import (
 	"fmt"
 	"net/http"
-	"os"
+	"strings"
 	"time"
+	"todoapi/common"
 
 	"github.com/gin-gonic/gin"
 	"github.com/golang-jwt/jwt/v4"
-	"github.com/joho/godotenv"
-	"go.uber.org/zap"
 )
 
 func RequireAuth(c *gin.Context) {
 
-	err := godotenv.Load(".env")
-	if err != nil {
-		zap.S().Error("Error: ", zap.Error(err))
-		return
-	}
-	secret_key := os.Getenv("SECRET")
+	env := common.GetEnvironment()
 
-	//get token off req
-	jwtToken, err := c.Cookie("Authorization")
+	secret_key := env.Secret
 
-	if err != nil {
-		fmt.Println("Patlayan jwt tokeni çekme")
-		c.AbortWithStatus(http.StatusUnauthorized)
-	}
-	/*bearerToken := c.Request.Header.Get("Authorization") Anlamadım sor
-	splitToken := strings.Split(bearerToken, " ")
-
+	reqToken := c.Request.Header.Get("Authorization")
+	splitToken := strings.Split(reqToken, " ")
 	if len(splitToken) != 2 {
-		fmt.Println("  request header hatasi")
+		fmt.Println("request header hatasi")
+		fmt.Println(len(splitToken))
 		return
-	}
-	jwtToken := splitToken[1]*/
 
-	//Decode/validate it
+	}
+	jwtToken := splitToken[1]
 	token, err := jwt.Parse(jwtToken, func(token *jwt.Token) (interface{}, error) {
 
 		if _, ok := token.Method.(*jwt.SigningMethodHMAC); !ok {
@@ -47,7 +35,6 @@ func RequireAuth(c *gin.Context) {
 	})
 
 	if claims, ok := token.Claims.(jwt.MapClaims); ok && token.Valid {
-		//Check exp
 		if claims["exp"].(float64) < float64(time.Now().Unix()) {
 			fmt.Println("Token time hatasi")
 			return

@@ -1,7 +1,10 @@
 package handler
 
 import (
+	"fmt"
 	"net/http"
+	"strconv"
+	"time"
 	"todoapi/adapters"
 	"todoapi/entities"
 	"todoapi/models"
@@ -14,11 +17,14 @@ import (
 )
 
 type UserHandler struct {
-	UserRepository repository.UserRepositoryInterface
+	UserRepository  repository.UserRepositoryInterface
+	RedisRepository repository.RedisRepositoryInterface
 }
 
-func CreateUserHandler(userRepository repository.UserRepositoryInterface) *UserHandler {
-	return &UserHandler{UserRepository: userRepository}
+func CreateUserHandler(userRepository repository.UserRepositoryInterface, redisRepository repository.RedisRepositoryInterface) *UserHandler {
+	return &UserHandler{UserRepository: userRepository,
+		RedisRepository: redisRepository,
+	}
 }
 
 func (handler *UserHandler) SignUser(c *gin.Context) {
@@ -62,7 +68,6 @@ func (handler *UserHandler) GetAllUsers(c *gin.Context) {
 }
 
 func (handler *UserHandler) Login(c *gin.Context) {
-	//request iste payloada bak
 	var payload *models.UserLoginRequest
 	if err := c.ShouldBindJSON(&payload); err != nil {
 		zap.S().Error("Error: ", zap.Error(err))
@@ -71,7 +76,6 @@ func (handler *UserHandler) Login(c *gin.Context) {
 		})
 		return
 	}
-	//response get yaz onla var mı yok mu kontrol et
 	user, err := handler.UserRepository.GetUserByEmail(payload.Email)
 	if user == nil {
 
@@ -86,7 +90,6 @@ func (handler *UserHandler) Login(c *gin.Context) {
 		})
 		return
 	}
-	// yollanan şifreyi haslı şifre ile karşılaştır
 
 	err = bcrypt.CompareHashAndPassword([]byte(user.Password), []byte(payload.Password))
 	if err != nil {
@@ -95,19 +98,82 @@ func (handler *UserHandler) Login(c *gin.Context) {
 		})
 		return
 	}
-	//JWT token yarat
 	user_jwt, err := utils.GenerateJWTToken(*user)
-	//JWT tokenı geri yolla
-	c.SetSameSite(http.SameSiteLaxMode)
-	c.SetCookie("Authorization", user_jwt, 3600, "", "", false, true)
+	stringUserId := strconv.FormatInt(int64(user.ID), 10)
+	err = handler.RedisRepository.Set(c, stringUserId, user_jwt, time.Hour)
 
-	c.JSON(http.StatusOK, gin.H{})
+	if err != nil {
+		zap.S().Error("Error: ", err)
+		c.JSON(http.StatusBadRequest, nil)
+		return
+	}
+	c.JSON(http.StatusOK, gin.H{
+		"token": user_jwt,
+	})
+
+}
+
+func (handler *UserHandler) Logout(c *gin.Context) {
+	var payload *models.UserLoginRequest
+	if err := c.ShouldBindJSON(&payload); err != nil {
+		zap.S().Error("Error: ", zap.Error(err))
+		c.JSON(http.StatusBadRequest, gin.H{
+			"message": "Bad request!",
+		})
+		return
+	}
+	user, err := handler.UserRepository.GetUserByEmail(payload.Email)
+	if user == nil {
+
+		c.JSON(http.StatusNotFound, gin.H{
+			"message": "User not exists!",
+		})
+		return
+	}
+	if user.Email != payload.Email {
+		c.JSON(http.StatusBadRequest, gin.H{
+			"massage": "Invalid email",
+		})
+		return
+	}
+
+	err = bcrypt.CompareHashAndPassword([]byte(user.Password), []byte(payload.Password))
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{
+			"massage": "Invalid  password",
+		})
+		return
+	}
+
+	stringUserId := strconv.FormatInt(int64(user.ID), 10)
+
+	result := handler.RedisRepository.Exists(c, stringUserId)
+	if result == 1 {
+		err = handler.RedisRepository.Delete(c, stringUserId)
+		if err != nil {
+			fmt.Println("Patlayan delete")
+			zap.S().Error("Error: ", err)
+			c.JSON(http.StatusBadRequest, nil)
+			return
+		}
+	}
+	if result == 0 {
+		c.JSON(http.StatusNotFound, gin.H{
+			"massage": "Token cannot found",
+		})
+		return
+	}
+
+	c.JSON(http.StatusOK, gin.H{
+		"massage": "Succesfully Logout",
+	})
+	return
 }
 
 func (handler *UserHandler) ValidateToken(c *gin.Context) {
 
 	c.JSON(http.StatusOK, gin.H{
-		"Massage": "its working",
+		"Massage": "Token is valid",
 	})
 
 }
