@@ -28,10 +28,15 @@ func (handler *ToDoHandler) CreateToDo(c *gin.Context) {
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return
 	}
+	if payload.Validate() == true {
+		c.JSON(http.StatusBadRequest, gin.H{
+			"message": "Bad request!!!",
+		})
+		return
+	}
 
 	createToDo := adapters.CreateFromToDoRequest(payload)
 	err := handler.ToDoRepository.Create(createToDo)
-
 	if err != nil {
 		zap.S().Error("Error: ", zap.Error(err))
 		return
@@ -82,15 +87,11 @@ func (handler *ToDoHandler) GetToDo(c *gin.Context) {
 	c.JSON(http.StatusOK, todo)
 }
 
-// 403 issue
-//
-//	ilk çözüm /user/:userid/todo/:todoid burdaki :todoid iyle işlem yap userid yi validate et
-//	ikinci çözüm  middleware parçalara ayır tokendeki useridyi çek tododa verilenle karşılaştır
 func (handler *ToDoHandler) UpdateToDo(c *gin.Context) {
 	userID, err := strconv.ParseUint(c.Param("userid"), 10, 64)
 	todoID, err := strconv.ParseUint(c.Param("todoid"), 10, 64)
 	checkToDo, err := handler.ToDoRepository.Get(todoID)
-	if checkToDo == nil { //check todo güncelle
+	if checkToDo == nil {
 		zap.S().Error("Error: ", zap.Error(err))
 		c.JSON(http.StatusNotFound, gin.H{
 			"message": "ToDo not exists!",
@@ -119,32 +120,16 @@ func (handler *ToDoHandler) UpdateToDo(c *gin.Context) {
 		})
 		return
 	}
+
+	if payload.Validate() == true {
+		c.JSON(http.StatusBadRequest, gin.H{
+			"message": "Bad request!!!",
+		})
+		return
+	}
 	updatedToDo := adapters.CreateFromToDoPatchRequest(checkToDo, payload)
 
 	err = handler.ToDoRepository.Update(updatedToDo)
-	/*
-		if err != nil {
-			zap.S().Error("Error: ", zap.Error(err))
-			return
-		}
-
-		if payloadToDo.Status == " " { //Trim space
-
-			c.JSON(http.StatusBadRequest, gin.H{
-				"message": "Bad request!",
-				"Status field cannot be empty if it's given in json!!": payloadToDo.Status,
-			})
-			return
-		}
-
-		if payloadToDo.Description == " " {
-
-			c.JSON(http.StatusBadRequest, gin.H{
-				"message": "Bad request!",
-				"Description field cannot be empty if given in json!!": payloadToDo.Description,
-			})
-			return
-		}*/
 
 	c.JSON(http.StatusCreated, checkToDo)
 }

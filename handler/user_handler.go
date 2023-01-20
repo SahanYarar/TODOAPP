@@ -29,11 +29,18 @@ func CreateUserHandler(userRepository repository.UserRepositoryInterface, redisR
 
 func (handler *UserHandler) SignUser(c *gin.Context) {
 	var payload = &models.UserSignRequest{}
+
 	if err := c.ShouldBindJSON(&payload); err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return
 	}
 
+	if payload.Validate() == true {
+		c.JSON(http.StatusBadRequest, gin.H{
+			"message": "Bad request!!!",
+		})
+		return
+	}
 	newUser := adapters.CreateFromUserSignRequest(payload)
 	err := handler.UserRepository.CreateUser(newUser)
 	userResponse := adapters.CreateFromUserEntities(newUser)
@@ -212,7 +219,6 @@ func (handler *UserHandler) DeleteUser(c *gin.Context) {
 
 }
 
-// User yoksa token zaten olamaz user kontrolüne gerek yok
 func (handler *UserHandler) UpdateUserPassword(c *gin.Context) {
 	userID, err := strconv.ParseUint(c.Param("id"), 10, 64)
 	checkToDo, err := handler.UserRepository.GetUserByID(userID)
@@ -231,7 +237,7 @@ func (handler *UserHandler) UpdateUserPassword(c *gin.Context) {
 	}
 	if payload.Validate() == false {
 		c.JSON(http.StatusBadRequest, gin.H{
-			"message": "Password did not match!",
+			"message": "Password did not match or it is  nil!",
 		})
 		return
 	}
