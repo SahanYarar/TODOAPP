@@ -8,11 +8,9 @@ import (
 )
 
 type Environment struct {
-	DatabaseUrl   string
-	Port          string
-	Secret        string
-	RedisAddr     string
-	RedisPassword string
+	DatabaseUrl string
+	Port        string
+	AuthURL     string
 }
 
 func GetEnvironment() *Environment {
@@ -24,15 +22,11 @@ func GetEnvironment() *Environment {
 
 	databaseUrl := os.Getenv("DNS")
 	port := os.Getenv("Port")
-	secret_key := os.Getenv("SECRET")
-	redisAddr := os.Getenv("REDIS_ADDR")
-	redisPassword := os.Getenv("REDIS_PASSWORD")
+	authUrl := os.Getenv("AuthURL")
 
 	return &Environment{
-		DatabaseUrl:   databaseUrl,
-		Port:          port,
-		Secret:        secret_key,
-		RedisAddr:     redisAddr,
-		RedisPassword: redisPassword,
+		DatabaseUrl: databaseUrl,
+		Port:        port,
+		AuthURL:     authUrl,
 	}
 }
