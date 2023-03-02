@@ -33,17 +33,20 @@ require (
 	github.com/jinzhu/inflection v1.0.0 // indirect
 	github.com/jinzhu/now v1.1.4 // indirect
 	github.com/json-iterator/go v1.1.12 // indirect
+	github.com/klauspost/compress v1.15.9 // indirect
 	github.com/leodido/go-urn v1.2.1 // indirect
 	github.com/lib/pq v1.10.2 // indirect
 	github.com/mattn/go-isatty v0.0.14 // indirect
 	github.com/modern-go/concurrent v0.0.0-20180228061459-e0a39a4cb421 // indirect
 	github.com/modern-go/reflect2 v1.0.2 // indirect
 	github.com/pelletier/go-toml/v2 v2.0.1 // indirect
+	github.com/pierrec/lz4/v4 v4.1.15 // indirect
+	github.com/segmentio/kafka-go v0.4.39 // indirect
 	github.com/ugorji/go/codec v1.2.7 // indirect
 	go.uber.org/atomic v1.7.0 // indirect
 	go.uber.org/multierr v1.6.0 // indirect
-	golang.org/x/net v0.0.0-20211112202133-69e39bad7dc2 // indirect
-	golang.org/x/sys v0.0.0-20211216021012-1d35b9e2eb4e // indirect
+	golang.org/x/net v0.0.0-20220706163947-c90051bbdb60 // indirect
+	golang.org/x/sys v0.0.0-20220520151302-bc2c85ada10a // indirect
 	golang.org/x/text v0.3.7 // indirect
 	google.golang.org/protobuf v1.28.0 // indirect
 	gopkg.in/yaml.v2 v2.4.0 // indirect

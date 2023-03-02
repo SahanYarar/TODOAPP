@@ -5,6 +5,7 @@ import (
 	"strconv"
 	"todoapi/adapters"
 	"todoapi/entities"
+	"todoapi/kafka"
 	"todoapi/models"
 	"todoapi/repository"
 
@@ -37,11 +38,12 @@ func (handler *UserHandler) SignUser(c *gin.Context) {
 	newUser := adapters.CreateFromUserSignRequest(payload)
 	err := handler.UserRepository.CreateUser(newUser)
 	userResponse := adapters.CreateFromUserEntities(newUser)
-
 	if err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return
 	}
+
+	go kafka.Produce("e-mail", userResponse)
 
 	c.JSON(http.StatusCreated, userResponse)
 }

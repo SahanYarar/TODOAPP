@@ -1,15 +1,11 @@
 package middleware
 
 import (
-	"fmt"
 	"net/http"
 	"todoapi/common"
 
 	"github.com/gin-gonic/gin"
 )
-
-type MiddleWareHandler struct {
-}
 
 func AuthMiddleware() gin.HandlerFunc {
 	return func(c *gin.Context) {
@@ -24,7 +20,6 @@ func AuthMiddleware() gin.HandlerFunc {
 
 		if resp.StatusCode != http.StatusOK {
 			c.JSON(resp.StatusCode, gin.H{"error": "Not authorized"})
-			fmt.Println("Burasi calisti")
 			return
 		}
 		defer resp.Body.Close()
@@ -32,19 +27,3 @@ func AuthMiddleware() gin.HandlerFunc {
 	}
 
 }
-
-/*
-client := &http.Client{
-	CheckRedirect: redirectPolicyFunc,
-}
-
-resp, err := client.Get("http://example.com")
-// ...
-
-req, err := http.NewRequest("GET", "http://example.com", nil)
-// ...
-req.Header.Add("If-None-Match", `W/"wyzzy"`)
-resp, err := client.Do(req)
-// ...
-
-*/

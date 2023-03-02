@@ -1,7 +1,6 @@
 package handler
 
 import (
-	"fmt"
 	"net/http"
 	"strconv"
 	"todoapi/adapters"
@@ -103,7 +102,6 @@ func (handler *ToDoHandler) UpdateToDo(c *gin.Context) {
 	if err != nil {
 		zap.S().Error("Error: ", zap.Error(err))
 		c.JSON(http.StatusInternalServerError, err)
-		fmt.Println("PAtlayan")
 		return
 	}
 	if checkToDo.UserID != userID {
