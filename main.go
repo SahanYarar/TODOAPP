@@ -30,6 +30,8 @@ func main() {
 	r.DELETE("/user/delete/:id", userHandler.DeleteUser)
 	//Change password
 	r.PATCH("/user/update/:id", middleware.AuthMiddleware(), userHandler.UpdateUserPassword)
+	//ActivateEmail
+	r.GET("/activation/:id", userHandler.ActivateEmail)
 
 	//Create Todo
 	r.POST("/todo/create", todoHandler.CreateToDo)

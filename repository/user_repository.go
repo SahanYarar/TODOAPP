@@ -16,6 +16,7 @@ type UserRepositoryInterface interface {
 	GetUserByEmail(email string) (*entities.User, error)
 	GetUserByID(id uint64) (*entities.User, error)
 	UpdateUserPassword(u *entities.User) error
+	UpdateIsEmailActive(U *entities.User) error
 	DeleteUser(id uint64) error
 }
 
@@ -68,4 +69,8 @@ func (userRepository *UserRepositoryDatabase) DeleteUser(id uint64) error {
 	todoID := &entities.User{ID: id}
 
 	return userRepository.db.Delete(todoID).Error
+}
+
+func (userRepository *UserRepositoryDatabase) UpdateIsEmailActive(u *entities.User) error {
+	return userRepository.db.Model(&u).Where("id = ?", &u.ID).Update("is_email_active", &u.IsEmailActive).Error
 }

@@ -115,7 +115,7 @@ func (handler *UserHandler) DeleteUser(c *gin.Context) {
 
 func (handler *UserHandler) UpdateUserPassword(c *gin.Context) {
 	userID, err := strconv.ParseUint(c.Param("id"), 10, 64)
-	checkToDo, err := handler.UserRepository.GetUserByID(userID)
+	checkUser, err := handler.UserRepository.GetUserByID(userID)
 	if err != nil {
 		zap.S().Error("Error: ", zap.Error(err))
 		c.JSON(http.StatusInternalServerError, err)
@@ -136,7 +136,24 @@ func (handler *UserHandler) UpdateUserPassword(c *gin.Context) {
 		return
 	}
 
-	updatedUser := adapters.CreateFromUserPasswordRequest(checkToDo, payload)
+	updatedUser := adapters.CreateFromUserPasswordRequest(checkUser, payload)
 	err = handler.UserRepository.UpdateUserPassword(updatedUser)
-	c.JSON(http.StatusCreated, checkToDo)
+	c.JSON(http.StatusCreated, checkUser)
+}
+
+func (handler *UserHandler) ActivateEmail(c *gin.Context) {
+	userID, err := strconv.ParseUint(c.Param("id"), 10, 64)
+	checkUser, err := handler.UserRepository.GetUserByID(userID)
+	if err != nil {
+		zap.S().Error("Error: ", zap.Error(err))
+		c.JSON(http.StatusInternalServerError, err)
+		return
+	}
+	checkUser.IsEmailActive = true
+	err = handler.UserRepository.UpdateIsEmailActive(checkUser)
+	c.JSON(http.StatusCreated, gin.H{
+		"message": "Your Account is now active!!!",
+		"User":    checkUser.IsEmailActive,
+	})
+
 }
