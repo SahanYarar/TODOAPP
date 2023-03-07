@@ -32,6 +32,7 @@ func main() {
 	r.PATCH("/user/update/:id", middleware.AuthMiddleware(), userHandler.UpdateUserPassword)
 	//ActivateEmail
 	r.GET("/activation/:id", userHandler.ActivateEmail)
+	r.POST("/resetpassword", userHandler.UserResetPassword)
 
 	//Create Todo
 	r.POST("/todo/create", todoHandler.CreateToDo)

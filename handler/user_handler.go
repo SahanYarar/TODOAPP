@@ -157,3 +157,43 @@ func (handler *UserHandler) ActivateEmail(c *gin.Context) {
 	})
 
 }
+func (handler *UserHandler) UserResetPassword(c *gin.Context) {
+	var payload *models.UserResetPasswordRequest
+	if err := c.ShouldBindJSON(&payload); err != nil {
+		zap.S().Error("Error: ", zap.Error(err))
+		c.JSON(http.StatusBadRequest, gin.H{
+			"message": "Bad request!",
+		})
+		return
+	}
+	user, err := handler.UserRepository.GetUserByEmail(payload.Email)
+	if err != nil {
+		zap.S().Error("Error: ", zap.Error(err))
+		c.JSON(http.StatusInternalServerError, err)
+		return
+	}
+	if user == nil {
+
+		c.JSON(http.StatusNotFound, gin.H{
+			"message": "User not exists!",
+		})
+		return
+	}
+	if user.Email != payload.Email {
+		c.JSON(http.StatusBadRequest, gin.H{
+			"message": "Invalid email",
+		})
+		return
+	}
+	if user.IsEmailActive == false {
+		c.JSON(http.StatusBadRequest, gin.H{
+			"message": "Email is not active!!",
+		})
+		return
+	}
+	userResponse := adapters.CreateFromUserEntities(user)
+	go kafka.Produce("e-mail", userResponse)
+	c.JSON(http.StatusOK, gin.H{
+		"message": "Produced !!",
+	})
+}

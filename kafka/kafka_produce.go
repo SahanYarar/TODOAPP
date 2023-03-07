@@ -16,7 +16,7 @@ func Produce(topic string, user *models.UserResponse) {
 
 	w := kafka.NewWriter(kafka.WriterConfig{
 		Brokers:  []string{env.KafkaBroker},
-		Topic:    "e-mail",
+		Topic:    topic,
 		Balancer: &kafka.LeastBytes{},
 	})
 	userData, err := json.Marshal(user)
