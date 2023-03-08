@@ -22,6 +22,13 @@ func CreateToDoHandler(todoRepository repository.ToDoRepositoryInterface) *ToDoH
 
 }
 
+// @Summary CreatesToDo
+// @Description CreatesToDo
+// @Produce json
+// @Param body body models.ToDoRequest true "ToDo  description,status and user_id"
+// @Success      201  {object} entities.ToDo
+// @Failure 400
+// @Router /todo/create [post]
 func (handler *ToDoHandler) CreateToDo(c *gin.Context) {
 	var payload = &models.ToDoRequest{}
 	if err := c.ShouldBindJSON(&payload); err != nil {
@@ -45,6 +52,13 @@ func (handler *ToDoHandler) CreateToDo(c *gin.Context) {
 	c.JSON(http.StatusCreated, createToDo)
 }
 
+// @Summary GetsAllTodos
+// @Description Gets all ToDos
+// @Produce json
+// @Success      200  {object} []entities.ToDo
+// @Failure 404
+// @Failure 500
+// @Router /todos/ [get]
 func (handler *ToDoHandler) GetAllToDos(c *gin.Context) {
 
 	var u []*entities.ToDo
@@ -66,6 +80,13 @@ func (handler *ToDoHandler) GetAllToDos(c *gin.Context) {
 	c.JSON(http.StatusOK, todos)
 }
 
+// @Summary GetToDo
+// @Description Gets ToDo by id
+// @Produce json
+// @Success      200  {object} entities.ToDo
+// @Failure 404
+// @Failure 500
+// @Router /todo/{todoid} [get]
 func (handler *ToDoHandler) GetToDo(c *gin.Context) {
 	todoID, err := strconv.ParseUint(c.Param("id"), 10, 64)
 
@@ -87,6 +108,16 @@ func (handler *ToDoHandler) GetToDo(c *gin.Context) {
 	c.JSON(http.StatusOK, todo)
 }
 
+// @Summary UpdateToDo
+// @Description Updates ToDo
+// @Security ApiKeyAuth
+// @Produce json
+// @Param body body models.ToDoPatchRequest true "ToDo  description,status"
+// @Success      201  {object} entities.ToDo
+// @Failure 400
+// @Failure 404
+// @Failure 500
+// @Router /user/{userid}/todo/update/{todoid} [patch]
 func (handler *ToDoHandler) UpdateToDo(c *gin.Context) {
 	userID, err := strconv.ParseUint(c.Param("userid"), 10, 64)
 	todoID, err := strconv.ParseUint(c.Param("todoid"), 10, 64)
@@ -134,6 +165,14 @@ func (handler *ToDoHandler) UpdateToDo(c *gin.Context) {
 	c.JSON(http.StatusCreated, checkToDo)
 }
 
+// @Summary DeletesToDo
+// @Description Deletes ToDo by todo and user id
+// @Security ApiKeyAuth
+// @Produce json
+// @Success 204
+// @Failure 404
+// @Failure 500
+// @Router /user/{userid}/todo/delete/{todoid} [delete]
 func (handler *ToDoHandler) DeleteToDo(c *gin.Context) {
 	userID, err := strconv.ParseUint(c.Param("userid"), 10, 64)
 	todoID, err := strconv.ParseUint(c.Param("todoid"), 10, 64)

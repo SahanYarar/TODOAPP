@@ -10,6 +10,20 @@ import (
 )
 
 func main() {
+	// @title TodoAPI
+	// @version 1.0
+	// @description  https://github.com/SahanYarar/TODOAPP
+
+	// @contact.name API Support
+	// @contact.url http://www.swagger.io/support
+	// @contact.email support@swagger.io
+
+	// @license.name MIT
+	// @license.url https://opensource.org/licenses/MIT
+
+	// @host localhost:9092
+	// @BasePath /
+	// @query.collection.format multi
 
 	env := common.GetEnvironment()
 	db := common.ConnectDatabase(env.DatabaseUrl)
@@ -31,8 +45,9 @@ func main() {
 	//Change password
 	r.PATCH("/user/update/:id", middleware.AuthMiddleware(), userHandler.UpdateUserPassword)
 	//ActivateEmail
-	r.GET("/activation/:id", userHandler.ActivateEmail)
-	r.POST("/resetpassword", userHandler.UserResetPassword)
+	r.PATCH("/activation/:id", userHandler.ActivateEmail)
+	//ResetPassword
+	r.PATCH("/resetpassword", userHandler.UserResetPassword)
 
 	//Create Todo
 	r.POST("/todo/create", todoHandler.CreateToDo)
