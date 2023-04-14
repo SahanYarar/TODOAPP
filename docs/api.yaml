@@ -1,0 +1,344 @@
+basePath: /
+definitions:
+  entities.ToDo:
+    properties:
+      createdAt:
+        type: string
+      deletedAt:
+        $ref: '#/definitions/gorm.DeletedAt'
+      description:
+        type: string
+      id:
+        type: integer
+      status:
+        type: string
+      updatedAt:
+        type: string
+      userID:
+        type: integer
+    type: object
+  entities.User:
+    properties:
+      createdAt:
+        type: string
+      deletedAt:
+        $ref: '#/definitions/gorm.DeletedAt'
+      email:
+        type: string
+      id:
+        type: integer
+      isEmailActive:
+        type: boolean
+      name:
+        type: string
+      password:
+        type: string
+      todos:
+        items:
+          $ref: '#/definitions/entities.ToDo'
+        type: array
+      updatedAt:
+        type: string
+    type: object
+  gorm.DeletedAt:
+    properties:
+      time:
+        type: string
+      valid:
+        description: Valid is true if Time is not NULL
+        type: boolean
+    type: object
+  models.ToDoPatchRequest:
+    properties:
+      description:
+        type: string
+      status:
+        type: string
+    type: object
+  models.ToDoRequest:
+    properties:
+      description:
+        type: string
+      status:
+        type: string
+      user_id:
+        type: integer
+    required:
+    - description
+    - status
+    - user_id
+    type: object
+  models.UserPasswordRequest:
+    properties:
+      confirm_password:
+        type: string
+      password:
+        type: string
+    required:
+    - confirm_password
+    - password
+    type: object
+  models.UserResetPasswordRequest:
+    properties:
+      email:
+        type: string
+    required:
+    - email
+    type: object
+  models.UserResponse:
+    properties:
+      CreatedAt:
+        type: string
+      DeletedAt:
+        $ref: '#/definitions/gorm.DeletedAt'
+      Id:
+        type: integer
+      IsActive:
+        type: boolean
+      Todos:
+        items:
+          $ref: '#/definitions/entities.ToDo'
+        type: array
+      UpdatedAt:
+        type: string
+      email:
+        type: string
+      name:
+        type: string
+    type: object
+  models.UserSignRequest:
+    properties:
+      email:
+        type: string
+      name:
+        type: string
+      password:
+        type: string
+    required:
+    - email
+    - name
+    - password
+    type: object
+host: localhost:9092
+info:
+  contact:
+    email: support@swagger.io
+    name: API Support
+    url: http://www.swagger.io/support
+  description: https://github.com/SahanYarar/TODOAPP
+  license:
+    name: MIT
+    url: https://opensource.org/licenses/MIT
+  title: TodoAPI
+  version: "1.0"
+paths:
+  /activation/{userid}:
+    patch:
+      description: Actives email
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Created
+        "500":
+          description: Internal Server Error
+      summary: ActivateEmail
+  /resetpassword:
+    patch:
+      description: Resets user password by email
+      parameters:
+      - description: User email
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/models.UserResetPasswordRequest'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Created
+        "400":
+          description: Bad Request
+        "404":
+          description: Not Found
+        "500":
+          description: Internal Server Error
+      summary: ResetUserPassword
+  /sign_up:
+    post:
+      description: Signs user and starts kafka.produce
+      parameters:
+      - description: User name,email and password
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/models.UserSignRequest'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Created
+          schema:
+            $ref: '#/definitions/models.UserResponse'
+        "400":
+          description: Bad Request
+      summary: SignUser
+  /todo/{todoid}:
+    get:
+      description: Gets ToDo by id
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/entities.ToDo'
+        "404":
+          description: Not Found
+        "500":
+          description: Internal Server Error
+      summary: GetToDo
+  /todo/create:
+    post:
+      description: CreatesToDo
+      parameters:
+      - description: ToDo  description,status and user_id
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/models.ToDoRequest'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Created
+          schema:
+            $ref: '#/definitions/entities.ToDo'
+        "400":
+          description: Bad Request
+      summary: CreatesToDo
+  /todos/:
+    get:
+      description: Gets all ToDos
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            items:
+              $ref: '#/definitions/entities.ToDo'
+            type: array
+        "404":
+          description: Not Found
+        "500":
+          description: Internal Server Error
+      summary: GetsAllTodos
+  /user/{userid}:
+    get:
+      description: Retrieves user by id
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/entities.User'
+        "404":
+          description: Not Found
+      summary: GetUser
+  /user/{userid}/todo/delete/{todoid}:
+    delete:
+      description: Deletes ToDo by todo and user id
+      produces:
+      - application/json
+      responses:
+        "204":
+          description: No Content
+        "404":
+          description: Not Found
+        "500":
+          description: Internal Server Error
+      security:
+      - ApiKeyAuth: []
+      summary: DeletesToDo
+  /user/{userid}/todo/update/{todoid}:
+    patch:
+      description: Updates ToDo
+      parameters:
+      - description: ToDo  description,status
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/models.ToDoPatchRequest'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Created
+          schema:
+            $ref: '#/definitions/entities.ToDo'
+        "400":
+          description: Bad Request
+        "404":
+          description: Not Found
+        "500":
+          description: Internal Server Error
+      security:
+      - ApiKeyAuth: []
+      summary: UpdateToDo
+  /user/delete/{userid}:
+    delete:
+      description: Deletes user
+      produces:
+      - application/json
+      responses:
+        "204":
+          description: No Content
+        "404":
+          description: Not Found
+      summary: DeleteUser
+  /user/update/{userid}:
+    patch:
+      description: Updates user password by id
+      parameters:
+      - description: User password,confirmpassword
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/models.UserPasswordRequest'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Created
+          schema:
+            $ref: '#/definitions/entities.User'
+        "400":
+          description: Bad Request
+        "500":
+          description: Internal Server Error
+      security:
+      - ApiKeyAuth: []
+      summary: UpdateUserPassword
+  /users:
+    get:
+      description: Retrieves all users
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            items:
+              $ref: '#/definitions/entities.User'
+            type: array
+        "404":
+          description: Not Found
+      summary: GetAllUsers
+swagger: "2.0"

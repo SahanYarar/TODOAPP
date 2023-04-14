@@ -1,32 +1,33 @@
 package handler
 
 import (
-	"fmt"
 	"net/http"
 	"strconv"
-	"time"
 	"todoapi/adapters"
 	"todoapi/entities"
+	"todoapi/kafka"
 	"todoapi/models"
 	"todoapi/repository"
-	"todoapi/utils"
 
 	"github.com/gin-gonic/gin"
 	"go.uber.org/zap"
-	"golang.org/x/crypto/bcrypt"
 )
 
 type UserHandler struct {
-	UserRepository  repository.UserRepositoryInterface
-	RedisRepository repository.RedisRepositoryInterface
+	UserRepository repository.UserRepositoryInterface
 }
 
-func CreateUserHandler(userRepository repository.UserRepositoryInterface, redisRepository repository.RedisRepositoryInterface) *UserHandler {
-	return &UserHandler{UserRepository: userRepository,
-		RedisRepository: redisRepository,
-	}
+func CreateUserHandler(userRepository repository.UserRepositoryInterface) *UserHandler {
+	return &UserHandler{UserRepository: userRepository}
 }
 
+// @Summary SignUser
+// @Description Signs user and starts kafka.produce
+// @Produce json
+// @Param body body models.UserSignRequest true "User name,email and password"
+// @Success      201  {object} models.UserResponse
+// @Failure 400
+// @Router /sign_up [post]
 func (handler *UserHandler) SignUser(c *gin.Context) {
 	var payload = &models.UserSignRequest{}
 
@@ -44,15 +45,22 @@ func (handler *UserHandler) SignUser(c *gin.Context) {
 	newUser := adapters.CreateFromUserSignRequest(payload)
 	err := handler.UserRepository.CreateUser(newUser)
 	userResponse := adapters.CreateFromUserEntities(newUser)
-
 	if err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return
 	}
 
+	go kafka.Produce("e-mail", userResponse)
+
 	c.JSON(http.StatusCreated, userResponse)
 }
 
+// @Summary GetAllUsers
+// @Description Retrieves all users
+// @Produce json
+// @Success      200  {object} []entities.User
+// @Failure 404
+// @Router /users [get]
 func (handler *UserHandler) GetAllUsers(c *gin.Context) {
 
 	var u []*entities.User
@@ -74,107 +82,12 @@ func (handler *UserHandler) GetAllUsers(c *gin.Context) {
 	c.JSON(http.StatusOK, user)
 }
 
-func (handler *UserHandler) Login(c *gin.Context) {
-	var payload *models.UserLoginRequest
-	if err := c.ShouldBindJSON(&payload); err != nil {
-		zap.S().Error("Error: ", zap.Error(err))
-		c.JSON(http.StatusBadRequest, gin.H{
-			"message": "Bad request!",
-		})
-		return
-	}
-	user, err := handler.UserRepository.GetUserByEmail(payload.Email)
-	if user == nil {
-
-		c.JSON(http.StatusNotFound, gin.H{
-			"message": "User not exists!",
-		})
-		return
-	}
-	if user.Email != payload.Email {
-		c.JSON(http.StatusBadRequest, gin.H{
-			"message": "Invalid email",
-		})
-		return
-	}
-
-	err = bcrypt.CompareHashAndPassword([]byte(user.Password), []byte(payload.Password))
-	if err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{
-			"message": "Invalid  password",
-		})
-		return
-	}
-	user_jwt, err := utils.GenerateJWTToken(*user)
-	stringUserId := strconv.FormatInt(int64(user.ID), 10)
-	err = handler.RedisRepository.Set(c, stringUserId, user_jwt, time.Hour)
-
-	if err != nil {
-		zap.S().Error("Error: ", err)
-		c.JSON(http.StatusBadRequest, nil)
-		return
-	}
-	c.JSON(http.StatusOK, gin.H{
-		"token": user_jwt,
-	})
-
-}
-
-func (handler *UserHandler) Logout(c *gin.Context) {
-	var payload *models.UserLoginRequest
-	if err := c.ShouldBindJSON(&payload); err != nil {
-		zap.S().Error("Error: ", zap.Error(err))
-		c.JSON(http.StatusBadRequest, gin.H{
-			"message": "Bad request!",
-		})
-		return
-	}
-	user, err := handler.UserRepository.GetUserByEmail(payload.Email)
-	if user == nil {
-
-		c.JSON(http.StatusNotFound, gin.H{
-			"message": "User not exists!",
-		})
-		return
-	}
-	if user.Email != payload.Email {
-		c.JSON(http.StatusBadRequest, gin.H{
-			"message": "Invalid email",
-		})
-		return
-	}
-
-	err = bcrypt.CompareHashAndPassword([]byte(user.Password), []byte(payload.Password))
-	if err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{
-			"message": "Invalid  password",
-		})
-		return
-	}
-
-	stringUserId := strconv.FormatInt(int64(user.ID), 10)
-	err = handler.RedisRepository.Delete(c, stringUserId)
-	if err != nil {
-		fmt.Println("Patlayan delete")
-		zap.S().Error("Error: ", err)
-		c.JSON(http.StatusBadRequest, nil)
-		return
-	}
-
-	c.JSON(http.StatusOK, gin.H{
-		"message": "Succesfully Logout",
-	})
-	return
-}
-
-func (handler *UserHandler) ValidateToken(c *gin.Context) {
-
-	c.JSON(http.StatusOK, gin.H{
-		"message": "Token is valid",
-	})
-
-}
-
+// @Summary GetUser
+// @Description Retrieves user by id
+// @Produce json
+// @Success      200 {object} entities.User
+// @Failure 404
+// @Router /user/{userid} [get]
 func (handler *UserHandler) GetUser(c *gin.Context) {
 	userID, err := strconv.ParseUint(c.Param("id"), 10, 64)
 
@@ -195,6 +108,12 @@ func (handler *UserHandler) GetUser(c *gin.Context) {
 	c.JSON(http.StatusOK, userResponse)
 }
 
+// @Summary DeleteUser
+// @Description Deletes user
+// @Produce json
+// @Success      204
+// @Failure 404
+// @Router /user/delete/{userid} [delete]
 func (handler *UserHandler) DeleteUser(c *gin.Context) {
 	userID, err := strconv.ParseUint(c.Param("id"), 10, 64)
 	checkUser, err := handler.UserRepository.GetUserByID(userID)
@@ -219,9 +138,18 @@ func (handler *UserHandler) DeleteUser(c *gin.Context) {
 
 }
 
+// @Summary UpdateUserPassword
+// @Description Updates user password by id
+// @Security ApiKeyAuth
+// @Produce json
+// @Param body body models.UserPasswordRequest true "User password,confirmpassword"
+// @Success      201  {object} entities.User
+// @Failure 400
+// @Failure 500
+// @Router /user/update/{userid} [patch]
 func (handler *UserHandler) UpdateUserPassword(c *gin.Context) {
 	userID, err := strconv.ParseUint(c.Param("id"), 10, 64)
-	checkToDo, err := handler.UserRepository.GetUserByID(userID)
+	checkUser, err := handler.UserRepository.GetUserByID(userID)
 	if err != nil {
 		zap.S().Error("Error: ", zap.Error(err))
 		c.JSON(http.StatusInternalServerError, err)
@@ -242,7 +170,80 @@ func (handler *UserHandler) UpdateUserPassword(c *gin.Context) {
 		return
 	}
 
-	updatedUser := adapters.CreateFromUserPasswordRequest(checkToDo, payload)
+	updatedUser := adapters.CreateFromUserPasswordRequest(checkUser, payload)
 	err = handler.UserRepository.UpdateUserPassword(updatedUser)
-	c.JSON(http.StatusCreated, checkToDo)
+	c.JSON(http.StatusCreated, checkUser)
+}
+
+// @Summary ActivateEmail
+// @Description Actives email
+// @Produce json
+// @Success 201
+// @Failure 500
+// @Router /activation/{userid} [patch]
+func (handler *UserHandler) ActivateEmail(c *gin.Context) {
+	userID, err := strconv.ParseUint(c.Param("id"), 10, 64)
+	checkUser, err := handler.UserRepository.GetUserByID(userID)
+	if err != nil {
+		zap.S().Error("Error: ", zap.Error(err))
+		c.JSON(http.StatusInternalServerError, err)
+		return
+	}
+	checkUser.IsEmailActive = true
+	err = handler.UserRepository.UpdateIsEmailActive(checkUser)
+	c.JSON(http.StatusCreated, gin.H{
+		"message": "Your Account is now active!!!",
+		"User":    checkUser.IsEmailActive,
+	})
+
+}
+
+// @Summary ResetUserPassword
+// @Description Resets user password by email
+// @Produce json
+// @Param body body models.UserResetPasswordRequest true "User email"
+// @Success 201
+// @Failure 400
+// @Failure 500
+// @Failure 404
+// @Router /resetpassword [patch]
+func (handler *UserHandler) UserResetPassword(c *gin.Context) {
+	var payload *models.UserResetPasswordRequest
+	if err := c.ShouldBindJSON(&payload); err != nil {
+		zap.S().Error("Error: ", zap.Error(err))
+		c.JSON(http.StatusBadRequest, gin.H{
+			"message": "Bad request!",
+		})
+		return
+	}
+	user, err := handler.UserRepository.GetUserByEmail(payload.Email)
+	if err != nil {
+		zap.S().Error("Error: ", zap.Error(err))
+		c.JSON(http.StatusInternalServerError, err)
+		return
+	}
+	if user == nil {
+
+		c.JSON(http.StatusNotFound, gin.H{
+			"message": "User not exists!",
+		})
+		return
+	}
+	if user.Email != payload.Email {
+		c.JSON(http.StatusBadRequest, gin.H{
+			"message": "Invalid email",
+		})
+		return
+	}
+	if user.IsEmailActive == false {
+		c.JSON(http.StatusBadRequest, gin.H{
+			"message": "Email is not active!!",
+		})
+		return
+	}
+	userResponse := adapters.CreateFromUserEntities(user)
+	go kafka.Produce("e-mail", userResponse)
+	c.JSON(http.StatusCreated, gin.H{
+		"message": "Produced !!",
+	})
 }

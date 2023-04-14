@@ -10,16 +10,27 @@ import (
 )
 
 func main() {
+	// @title TodoAPI
+	// @version 1.0
+	// @description  https://github.com/SahanYarar/TODOAPP
+
+	// @contact.name API Support
+	// @contact.url http://www.swagger.io/support
+	// @contact.email support@swagger.io
+
+	// @license.name MIT
+	// @license.url https://opensource.org/licenses/MIT
+
+	// @host localhost:9092
+	// @BasePath /
+	// @query.collection.format multi
 
 	env := common.GetEnvironment()
 	db := common.ConnectDatabase(env.DatabaseUrl)
-	rbd := common.CreateRedisClient()
-	redisRepository := repository.CreateRepositoryRedis(rbd)
 	userRepository := repository.CreateRepositoryUser(db)
 	todoRepository := repository.CreateRepositoryToDo(db)
 
-	middlewareHandler := middleware.CreateMiddlewareHandler(redisRepository)
-	userHandler := handler.CreateUserHandler(userRepository, redisRepository)
+	userHandler := handler.CreateUserHandler(userRepository)
 	todoHandler := handler.CreateToDoHandler(todoRepository)
 
 	r := gin.Default()
@@ -27,19 +38,16 @@ func main() {
 	r.GET("/users", userHandler.GetAllUsers)
 	//Sign user
 	r.POST("/sign_up", userHandler.SignUser)
-	//Login user
-	r.POST("/login", userHandler.Login)
-	//Logout user
-	r.POST("/logout", middlewareHandler.RequireAuth, userHandler.Logout)
-	//Testing middleware
-	r.GET("/validate", middlewareHandler.RequireAuth, userHandler.ValidateToken)
-
 	//Get user
 	r.GET("/user/:id", userHandler.GetUser)
 	//Delete user
 	r.DELETE("/user/delete/:id", userHandler.DeleteUser)
 	//Change password
-	r.PATCH("/user/update/:id", middlewareHandler.RequireAuth, userHandler.UpdateUserPassword)
+	r.PATCH("/user/update/:id", middleware.AuthMiddleware(), userHandler.UpdateUserPassword)
+	//ActivateEmail
+	r.PATCH("/activation/:id", userHandler.ActivateEmail)
+	//ResetPassword
+	r.PATCH("/resetpassword", userHandler.UserResetPassword)
 
 	//Create Todo
 	r.POST("/todo/create", todoHandler.CreateToDo)
@@ -48,9 +56,9 @@ func main() {
 	//Get Todo by id
 	r.GET("/todo/:id", todoHandler.GetToDo)
 	//Patch Todo
-	r.PATCH("user/:userid/todo/update/:todoid", middlewareHandler.RequireAuth, todoHandler.UpdateToDo)
+	r.PATCH("user/:userid/todo/update/:todoid", middleware.AuthMiddleware(), todoHandler.UpdateToDo)
 	//Delete Todo
-	r.DELETE("user/:userid/todo/delete/:todoid", middlewareHandler.RequireAuth, todoHandler.DeleteToDo)
+	r.DELETE("user/:userid/todo/delete/:todoid", middleware.AuthMiddleware(), todoHandler.DeleteToDo)
 	//Test main.go
 	r.GET("/test", func(c *gin.Context) {
 		c.JSON(200, gin.H{
