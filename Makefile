@@ -16,8 +16,8 @@ PHONY: migrate_up
 migrate_up: tools/migrate
 	$(call print-target)
 	echo ${POSTGRESQL_URL} 
-	./tools/migrate -path migrations  -database "postgres://sahan:142963@localhost:5432/sahan1?sslmode=disable"  -verbose up 
+	./tools/migrate -path migrations  -database "postgres://sahan:142963@localhost:5432/sahan?sslmode=disable"  -verbose up 
 
 PHONY: migrate_down
 migrate_down: tools/migrate
-	./tools/migrate -path migrations -database "postgres://sahan:142963@localhost:5432/sahan1?sslmode=disable" -verbose down 
+	./tools/migrate -path migrations -database "postgres://sahan:142963@localhost:5432/sahan?sslmode=disable" -verbose down 
