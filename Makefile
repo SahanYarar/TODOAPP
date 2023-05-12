@@ -21,3 +21,7 @@ migrate_up: tools/migrate
 PHONY: migrate_down
 migrate_down: tools/migrate
 	./tools/migrate -path migrations -database "postgres://sahan:142963@localhost:5432/sahan?sslmode=disable" -verbose down 
+
+lint:
+ golangci-lint run
+
