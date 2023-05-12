@@ -7,6 +7,7 @@ import (
 	"todoapi/repository"
 
 	"github.com/gin-gonic/gin"
+	"go.uber.org/zap"
 )
 
 func main() {
@@ -67,5 +68,9 @@ func main() {
 
 	})
 
-	r.Run(env.Port)
+	err := r.Run(env.Port)
+	if err != nil {
+		zap.S().Error("Error: ", zap.Error(err))
+		return
+	}
 }

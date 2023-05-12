@@ -35,7 +35,7 @@ func (handler *ToDoHandler) CreateToDo(c *gin.Context) {
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return
 	}
-	if payload.Validate() == true {
+	if payload.Validate() {
 		c.JSON(http.StatusBadRequest, gin.H{
 			"message": "Bad request!!!",
 		})
@@ -97,6 +97,12 @@ func (handler *ToDoHandler) GetToDo(c *gin.Context) {
 	}
 
 	todo, err := handler.ToDoRepository.Get(todoID)
+	if err != nil {
+		zap.S().Error("Error: ", zap.Error(err))
+		c.JSON(http.StatusInternalServerError, nil)
+		return
+	}
+
 	if todo == nil {
 
 		c.JSON(http.StatusNotFound, gin.H{
@@ -120,7 +126,18 @@ func (handler *ToDoHandler) GetToDo(c *gin.Context) {
 // @Router /user/{userid}/todo/update/{todoid} [patch]
 func (handler *ToDoHandler) UpdateToDo(c *gin.Context) {
 	userID, err := strconv.ParseUint(c.Param("userid"), 10, 64)
+	if err != nil {
+		zap.S().Error("Error: ", zap.Error(err))
+		c.JSON(http.StatusInternalServerError, nil)
+		return
+	}
 	todoID, err := strconv.ParseUint(c.Param("todoid"), 10, 64)
+
+	if err != nil {
+		zap.S().Error("Error: ", zap.Error(err))
+		c.JSON(http.StatusInternalServerError, nil)
+		return
+	}
 	checkToDo, err := handler.ToDoRepository.Get(todoID)
 	if checkToDo == nil {
 		zap.S().Error("Error: ", zap.Error(err))
@@ -152,7 +169,7 @@ func (handler *ToDoHandler) UpdateToDo(c *gin.Context) {
 		return
 	}
 
-	if payload.Validate() == true {
+	if payload.Validate() {
 		c.JSON(http.StatusBadRequest, gin.H{
 			"message": "Bad request!!!",
 		})
@@ -161,6 +178,11 @@ func (handler *ToDoHandler) UpdateToDo(c *gin.Context) {
 	updatedToDo := adapters.CreateFromToDoPatchRequest(checkToDo, payload)
 
 	err = handler.ToDoRepository.Update(updatedToDo)
+	if err != nil {
+		zap.S().Error("Error: ", zap.Error(err))
+		c.JSON(http.StatusInternalServerError, nil)
+		return
+	}
 
 	c.JSON(http.StatusCreated, checkToDo)
 }
@@ -175,7 +197,17 @@ func (handler *ToDoHandler) UpdateToDo(c *gin.Context) {
 // @Router /user/{userid}/todo/delete/{todoid} [delete]
 func (handler *ToDoHandler) DeleteToDo(c *gin.Context) {
 	userID, err := strconv.ParseUint(c.Param("userid"), 10, 64)
+	if err != nil {
+		zap.S().Error("Error: ", zap.Error(err))
+		c.JSON(http.StatusInternalServerError, nil)
+		return
+	}
 	todoID, err := strconv.ParseUint(c.Param("todoid"), 10, 64)
+	if err != nil {
+		zap.S().Error("Error: ", zap.Error(err))
+		c.JSON(http.StatusInternalServerError, nil)
+		return
+	}
 	checkToDo, err := handler.ToDoRepository.Get(todoID)
 	if checkToDo == nil {
 		zap.S().Error("Error: ", zap.Error(err))
