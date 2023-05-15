@@ -46,7 +46,7 @@ func main() {
 	//Change password
 	r.PATCH("/user/update/:id", middleware.AuthMiddleware(), userHandler.UpdateUserPassword)
 	//ActivateEmail
-	r.PATCH("/activation/:id", userHandler.ActivateEmail)
+	r.GET("/activation/:id", userHandler.ActivateEmail)
 	//ResetPassword
 	r.PATCH("/resetpassword", userHandler.UserResetPassword)
 
