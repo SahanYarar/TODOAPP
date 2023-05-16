@@ -36,7 +36,7 @@ func (handler *UserHandler) SignUser(c *gin.Context) {
 		return
 	}
 
-	if payload.Validate() == true {
+	if payload.Validate() {
 		c.JSON(http.StatusBadRequest, gin.H{
 			"message": "Bad request!!!",
 		})
@@ -97,6 +97,12 @@ func (handler *UserHandler) GetUser(c *gin.Context) {
 		return
 	}
 	user, err := handler.UserRepository.GetUserByID(userID)
+	if err != nil {
+		zap.S().Error("Error: ", zap.Error(err))
+		c.JSON(http.StatusInternalServerError, nil)
+		return
+	}
+
 	if user == nil {
 
 		c.JSON(http.StatusNotFound, gin.H{
@@ -116,6 +122,11 @@ func (handler *UserHandler) GetUser(c *gin.Context) {
 // @Router /user/delete/{userid} [delete]
 func (handler *UserHandler) DeleteUser(c *gin.Context) {
 	userID, err := strconv.ParseUint(c.Param("id"), 10, 64)
+	if err != nil {
+		zap.S().Error("Error: ", zap.Error(err))
+		c.JSON(http.StatusInternalServerError, nil)
+		return
+	}
 	checkUser, err := handler.UserRepository.GetUserByID(userID)
 	if checkUser == nil {
 		zap.S().Error("Error: ", zap.Error(err))
@@ -149,6 +160,11 @@ func (handler *UserHandler) DeleteUser(c *gin.Context) {
 // @Router /user/update/{userid} [patch]
 func (handler *UserHandler) UpdateUserPassword(c *gin.Context) {
 	userID, err := strconv.ParseUint(c.Param("id"), 10, 64)
+	if err != nil {
+		zap.S().Error("Error: ", zap.Error(err))
+		c.JSON(http.StatusInternalServerError, nil)
+		return
+	}
 	checkUser, err := handler.UserRepository.GetUserByID(userID)
 	if err != nil {
 		zap.S().Error("Error: ", zap.Error(err))
@@ -163,7 +179,7 @@ func (handler *UserHandler) UpdateUserPassword(c *gin.Context) {
 		})
 		return
 	}
-	if payload.Validate() == false {
+	if !payload.Validate() {
 		c.JSON(http.StatusBadRequest, gin.H{
 			"message": "Password did not match or it is  nil!",
 		})
@@ -172,6 +188,11 @@ func (handler *UserHandler) UpdateUserPassword(c *gin.Context) {
 
 	updatedUser := adapters.CreateFromUserPasswordRequest(checkUser, payload)
 	err = handler.UserRepository.UpdateUserPassword(updatedUser)
+	if err != nil {
+		zap.S().Error("Error: ", zap.Error(err))
+		c.JSON(http.StatusInternalServerError, nil)
+		return
+	}
 	c.JSON(http.StatusCreated, checkUser)
 }
 
@@ -183,6 +204,11 @@ func (handler *UserHandler) UpdateUserPassword(c *gin.Context) {
 // @Router /activation/{userid} [patch]
 func (handler *UserHandler) ActivateEmail(c *gin.Context) {
 	userID, err := strconv.ParseUint(c.Param("id"), 10, 64)
+	if err != nil {
+		zap.S().Error("Error: ", zap.Error(err))
+		c.JSON(http.StatusInternalServerError, nil)
+		return
+	}
 	checkUser, err := handler.UserRepository.GetUserByID(userID)
 	if err != nil {
 		zap.S().Error("Error: ", zap.Error(err))
@@ -191,6 +217,11 @@ func (handler *UserHandler) ActivateEmail(c *gin.Context) {
 	}
 	checkUser.IsEmailActive = true
 	err = handler.UserRepository.UpdateIsEmailActive(checkUser)
+	if err != nil {
+		zap.S().Error("Error: ", zap.Error(err))
+		c.JSON(http.StatusInternalServerError, nil)
+		return
+	}
 	c.JSON(http.StatusCreated, gin.H{
 		"message": "Your Account is now active!!!",
 		"User":    checkUser.IsEmailActive,

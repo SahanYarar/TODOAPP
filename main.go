@@ -7,6 +7,7 @@ import (
 	"todoapi/repository"
 
 	"github.com/gin-gonic/gin"
+	"go.uber.org/zap"
 )
 
 func main() {
@@ -45,7 +46,7 @@ func main() {
 	//Change password
 	r.PATCH("/user/update/:id", middleware.AuthMiddleware(), userHandler.UpdateUserPassword)
 	//ActivateEmail
-	r.PATCH("/activation/:id", userHandler.ActivateEmail)
+	r.GET("/activation/:id", userHandler.ActivateEmail)
 	//ResetPassword
 	r.PATCH("/resetpassword", userHandler.UserResetPassword)
 
@@ -67,5 +68,9 @@ func main() {
 
 	})
 
-	r.Run(env.Port)
+	err := r.Run(env.Port)
+	if err != nil {
+		zap.S().Error("Error: ", zap.Error(err))
+		return
+	}
 }

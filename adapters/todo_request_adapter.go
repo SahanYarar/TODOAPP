@@ -16,6 +16,16 @@ func CreateFromToDoRequest(r *models.ToDoRequest) *entities.ToDo {
 }
 
 func CreateFromToDoPatchRequest(c *entities.ToDo, r *models.ToDoPatchRequest) *entities.ToDo {
+	if r.Status != "" {
+		c.Status = r.Status
+	}
+	if r.Description != "" {
+		c.Description = r.Description
+	}
+	return c
+}
+
+/*func CreateFromToDoPatchRequest(c *entities.ToDo, r *models.ToDoPatchRequest) *entities.ToDo {
 	if &r.Status != nil {
 		c.Status = r.Status
 	}
@@ -23,7 +33,7 @@ func CreateFromToDoPatchRequest(c *entities.ToDo, r *models.ToDoPatchRequest) *e
 		c.Description = r.Description
 	}
 	return c
-}
+}*/
 
 /*
 type ToDoAdapterInterface interface {
